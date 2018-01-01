@@ -1,0 +1,39 @@
+{
+  "name": "homebridge-ranger",
+  "version": "0.0.1",
+  "description": "A HomeKit range extender for Bluetooth Low Energy (BLE) accessories.",
+  "main": "src/index.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/grover/homebridge-ranger.git"
+  },
+  "keywords": [
+    "HomeKit",
+    "BLE",
+    "Bluetooth",
+    "Range",
+    "Extender",
+    "Homebridge",
+    "homebridge",
+    "plugin"
+  ],
+  "author": "Michael Fröhlich",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/grover/homebridge-ranger/issues"
+  },
+  "homepage": "https://github.com/grover/homebridge-ranger#readme",
+  "peerDependencies": {
+    "hap-nodejs": "^0.4.36"
+  },
+  "engines": {
+    "node": ">=0.12.0",
+    "homebridge": ">=0.2.0"
+  }
+}
