@@ -27,4 +27,13 @@ There's likely technical reasons why there's no commercially available range ext
 
 Some devices may only support a limited total number of pairings over their life span. Do not pair/unpair excessively or you may run into this.
 
+## Number of Bluetooth accessories
+
+The current implementation does not work well with many paired bluetooth
+accessories - a recommendation is to keep the total number lower than 5. However there's
+no hard limit to this number - it may work well if you pair more devices. If you
+start seeing issues, try reducing the number of paired accessories. The limit is
+really in the Bluetooth stack of the system running Homebridge and thus the limitations
+described on the [noble](https://github.com/sandeepmistry/noble) page apply.
+
 Continue to [Requirements](requirements.md)

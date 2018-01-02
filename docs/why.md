@@ -2,7 +2,7 @@
 
 Since the beginning HomeKit has always supported two ways to connect HomeKit accessories in a Home: Via regular home networking/WiFi and via Bluetooth. Bluetooth accessories suffer from range limitations and signal strength issues, but draw less power and are likely operated by batteries.
 
-Since the beginning HomeKit supported a special type of accessories called range extenders, which should solve the signal range issue. Unfortunately there's no range extender available on the market today (besides the Apple TV itself.)
+To circumvent the range limitations HomeKit supported a special type of accessories called range extenders. Unfortunately there's no range extender available on the market today (besides the Apple TV itself.)
 
 It's a moot point to get into the speculation why none of the announced range extenders have made it to the market. There's likely market, business and
 technical reasons for this, which have not been published yet.

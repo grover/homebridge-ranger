@@ -7,6 +7,10 @@ Installing this plugin is a bit more difficult than your usual plugin. It's been
 - [Raspberry PI](install/raspberrypi.md)
 - [macOS](install/macos.md)
 
+## Verifying the installation
+
+- [Verify your installation of homebridge-ranger](install/verify.md)
+
 ## Pairing accessories
 
 - [Pairing an accessory](pairing/pairing.md)

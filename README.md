@@ -20,6 +20,7 @@ Please read the documentation in its entirety as this plugin is a bit more compl
 - [Installation instructions](docs/install.md)
   - [Raspberry Pi](docs/install/raspberrypi.md)
   - [macOS](docs/install/macos.md)
+  - [Verify your installation of homebridge-ranger](docs/install/verify.md)
 - [Pairing accessories](docs/pairing/pairing.md)
   - [Supported accessories](docs/accessories/index.md)
 - [Contributing](docs/CONTRIBUTING.md)
