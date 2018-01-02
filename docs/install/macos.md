@@ -23,7 +23,7 @@ Please follow the installation instructions of the prerequisites from [noble](ht
 In Terminal:
 
 ```bash
-npm install -g github:PolideaInternal/noble#4a18e3e640f5489df76a607a6e316988ade242c5
+npm install -g github:grover/noble#8249e9c3b2c50a0a63e81d859d9dc16acd84c080
 ```
 
 This patch is only necessary on High Sierra due to changes in the Bluetooth implementation there.
