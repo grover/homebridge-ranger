@@ -24,7 +24,7 @@ const hiddenServices = [
 ];
 
 const hiddenCharacteristics = [
-  '000000A5-0000-1000-8000-0026BB765291'
+  // '000000A5-0000-1000-8000-0026BB765291'
 ];
 
 class AccessoryDatabase {
@@ -287,16 +287,19 @@ async function discoverCharacteristicMetadata(device, cids) {
 async function discoverServiceMetadata(device, characteristics) {
 
   const serviceSignature = characteristics
-    .filter(c => c.address && c.address.characteristics === '000000a50000100080000026bb765291');
+    .filter(c => c.address && c.address.characteristic === '000000a50000100080000026bb765291');
 
   if (serviceSignature.length === 0) {
     return {};
   }
 
-  const sig = serviceSignature[0];
-  const op = new ServiceSignatureReadRequest(sig.address, sig.cid);
-  const service = await device.run(op);
-  return service;
+  serviceSignature
+    .map(async svc => {
+      const sig = serviceSignature[0];
+      const op = new ServiceSignatureReadRequest(svc.address, svc.cid);
+      const service = await device.run(op);
+      console.log(`Service signature ${JSON.stringify(service)}`);
+    });
 }
 
 module.exports = {

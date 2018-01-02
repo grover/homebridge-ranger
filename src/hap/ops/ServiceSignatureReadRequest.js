@@ -7,17 +7,16 @@ const HapCharacteristicSignatureDecoder = require('./../HapCharacteristicSignatu
 class ServiceSignatureReadRequest extends RequestBase {
 
   constructor(address, cid) {
-    this._address = address;
-    this._cid = cid;
-
     const request = {
       address: address,
       opcode: OpCodes.ServiceSignatureRead,
       cid: cid,
-      payload: payload
+      payload: []
     }
 
     super(request);
+    this._address = address;
+    this._cid = cid;
   }
 
   handleResponse(response) {

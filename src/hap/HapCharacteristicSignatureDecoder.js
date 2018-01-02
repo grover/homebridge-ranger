@@ -64,7 +64,7 @@ function decodeLinkedServices(metadata, value) {
     return;
   }
 
-
+  console.log(`Found linked services, don't know how to parse ${JSON.stringify(value)}`);
 }
 
 const decoderTable = {
