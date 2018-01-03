@@ -55,15 +55,28 @@ class HapExecutor {
       await this._device.write(c, encryptedPacket);
 
       // TODO: Iterate over response fragments
-      const rxPacket = await this._device.read(c);
-      const decryptedPacket = this._decryptRxPacket(rxPacket, !request.insecure);
-      const responsePayload = this._getResponsePayload(decryptedPacket, transactionId);
+      let responsePayload = await this._read(c, request.insecure, transactionId);
       const response = TLV8Decoder.decode(responsePayload);
-
       cmd.handleResponse(response);
     }
 
     return cmd.getResult();
+  }
+
+  async _read(c, insecure, transactionId) {
+    let payload = Buffer.alloc(0);
+    while (true) {
+      const rxPacket = await this._device.read(c);
+      if (!rxPacket) {
+        break;
+      }
+
+      const decryptedPacket = this._decryptRxPacket(rxPacket, !insecure);
+      const responsePayload = this._getResponsePayload(decryptedPacket, transactionId);
+      payload = Buffer.concat([payload, responsePayload]);
+    }
+
+    return payload;
   }
 
   _buildPacket(op, transactionId, cid, payload) {
