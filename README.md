@@ -8,8 +8,6 @@ Bridges existing HomeKit BLE accessories to IP via [Homebridge](https://github.c
 
 **This plugin is in early development. While it has already been used in several situations, expect it to fail. Contributions are welcome to improve it.**
 
-It's not yet available for download. Please stay tuned.
-
 ## Documentation
 
 Please read the documentation in its entirety as this plugin is a bit more complex than your usual Homebridge plugin.
