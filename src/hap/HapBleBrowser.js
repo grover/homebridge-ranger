@@ -1,6 +1,7 @@
 const EventEmitter = require('events').EventEmitter;
 const ManufacturerDataParser = require('./ManufacturerDataParser');
 const HapBleDevice = require('./HapBleDevice');
+const chalk = require('chalk');
 
 class HapBleBrowser extends EventEmitter {
 
@@ -39,20 +40,64 @@ class HapBleBrowser extends EventEmitter {
     if (peripheral.advertisement.manufacturerData) {
       const data = ManufacturerDataParser(peripheral.advertisement.manufacturerData);
       if (data.isHAP) {
-
-        let device = this._devices[peripheral.id];
-        if (device) {
-          // Update manufacturerData
-          device.updateManufacturerData(data);
-        }
-        else {
-          const device = new HapBleDevice(this.log, peripheral, data);
-          this._devices[peripheral.id] = device;
-
-          this.emit('discovered', device);
+        if (this._ensureMacAddressIsAvailable(peripheral)) {
+          if (this._updateDevice(peripheral, data) === false) {
+            this._addDevice(peripheral, data);
+          }
         }
       }
     }
+  }
+
+  _ensureMacAddressIsAvailable(peripheral) {
+    // Mac specific hack :(
+    if (peripheral.address === 'unknown' && peripheral.advertisement.localName !== 'unknown') {
+      // CoreBluetooth doesn't have the address in its cache, connect to it once
+      // to ensure the address is available.
+      peripheral.connect((error) => {
+        if (!error) {
+          peripheral.disconnect();
+        }
+      });
+
+      return false;
+    }
+
+    return true;
+  }
+
+  _updateDevice(peripheral, data) {
+    let device = this._devices[peripheral.id];
+    if (device && device.ignore == false) {
+      // Update manufacturerData to enable disconnected notifications
+      device.updateManufacturerData(data);
+
+      if (device.rssi != peripheral.rssi) {
+        const diff = Math.abs(device.rssi - peripheral.rssi);
+
+        // Ignore 1dB changes
+        if (diff > 1) {
+          device.rssi = peripheral.rssi;
+          this.log(`${device.name}: rrsi=${device.rssi}dB`);
+        }
+      }
+    }
+
+    return device !== undefined;
+  }
+
+  _addDevice(peripheral, data) {
+    const device = new HapBleDevice(this.log, peripheral, data);
+    this._devices[peripheral.id] = device;
+
+    if (device.isPaired) {
+      this.log(`Found paired accessory ${device.name} address=${device.address} rssi=${device.rssi}dB`);
+    }
+    else {
+      this.log(chalk.yellowBright(`Found unpaired accessory ${device.name} address=${device.address} rssi=${device.rssi}dB`));
+    }
+
+    this.emit('discovered', device);
   }
 };
 

@@ -15,26 +15,26 @@ Loading 1 platforms...
 [Ranger] Ranger Platform Plugin Loaded
 [Ranger] DidFinishLaunching
 [Ranger] Starting to scan for BLE HomeKit accessories
-[Ranger] New HAP-BLE accessory Eve Energy 7443 Address=xx:xx:xx:xx:xx:xx RSSI=-71dB state=disconnected isPaired=true
-[Ranger] New HAP-BLE accessory Eve Address=xx:xx:xx:xx:xx:xx RSSI=-69dB state=disconnected isPaired=true
-[Ranger] New HAP-BLE accessory Eve Door B4B8 Address=xx:xx:xx:xx:xx:xx RSSI=-85dB state=disconnected isPaired=true
-[Ranger] New HAP-BLE accessory Eve Door 89DB Address=xx:xx:xx:xx:xx:xx RSSI=-68dB state=disconnected isPaired=true
-[Ranger] New HAP-BLE accessory Eve Door B6AC Address=xx:xx:xx:xx:xx:xx RSSI=-84dB state=disconnected isPaired=true
-[Ranger] New HAP-BLE accessory Eve Door F9DA Address=xx:xx:xx:xx:xx:xx RSSI=-90dB state=disconnected isPaired=true
-[Ranger] New HAP-BLE accessory Eve Address=xx:xx:xx:xx:xx:xx RSSI=-66dB state=disconnected isPaired=true
-[Ranger] New HAP-BLE accessory Eve Address=xx:xx:xx:xx:xx:xx RSSI=-69dB state=disconnected isPaired=true
-[Ranger] New HAP-BLE accessory Eve Address=xx:xx:xx:xx:xx:xx RSSI=-61dB state=disconnected isPaired=true
-[Ranger] New HAP-BLE accessory Eve Address=xx:xx:xx:xx:xx:xx RSSI=-71dB state=disconnected isPaired=true
-[Ranger] New HAP-BLE accessory Eve Address=xx:xx:xx:xx:xx:xx RSSI=-44dB state=disconnected isPaired=true
-[Ranger] New HAP-BLE accessory Eve Address=xx:xx:xx:xx:xx:xx RSSI=-85dB state=disconnected isPaired=true
-[Ranger] New HAP-BLE accessory Eve Address=xx:xx:xx:xx:xx:xx RSSI=-57dB state=disconnected isPaired=true
-[Ranger] New HAP-BLE accessory Eve Address=xx:xx:xx:xx:xx:xx RSSI=-69dB state=disconnected isPaired=true
-[Ranger] New HAP-BLE accessory Eve Address=xx:xx:xx:xx:xx:xx RSSI=-68dB state=disconnected isPaired=true
-[Ranger] New HAP-BLE accessory Eve Door 28B3 Address=xx:xx:xx:xx:xx:xx RSSI=-74dB state=disconnected isPaired=true
-[Ranger] New HAP-BLE accessory Eve Address=xx:xx:xx:xx:xx:xx RSSI=-72dB state=disconnected isPaired=true
-[Ranger] New HAP-BLE accessory Eve Address=xx:xx:xx:xx:xx:xx RSSI=-76dB state=disconnected isPaired=true
-[Ranger] New HAP-BLE accessory Eve Address=xx:xx:xx:xx:xx:xx RSSI=-73dB state=disconnected isPaired=true
-[Ranger] New HAP-BLE accessory Eve Address=xx:xx:xx:xx:xx:xx RSSI=-46dB state=disconnected isPaired=true
+[Ranger] Found unpaired accessory Eve Energy 7443 address=xx:xx:xx:xx:xx:xx rssi=-71dB
+[Ranger] Found paired accessory Eve address=xx:xx:xx:xx:xx:xx rssi=-69dB
+[Ranger] Found paired accessory Eve Door B4B8 address=xx:xx:xx:xx:xx:xx rssi=-85dB
+[Ranger] Found paired accessory Eve Door 89DB address=xx:xx:xx:xx:xx:xx rssi=-68dB
+[Ranger] Found paired accessory Eve Door B6AC address=xx:xx:xx:xx:xx:xx rssi=-84dB
+[Ranger] Found paired accessory Eve Door F9DA address=xx:xx:xx:xx:xx:xx rssi=-90dB
+[Ranger] Found paired accessory Eve address=xx:xx:xx:xx:xx:xx rssi=-66dB
+[Ranger] Found paired accessory Eve address=xx:xx:xx:xx:xx:xx rssi=-69dB
+[Ranger] Found paired accessory Eve address=xx:xx:xx:xx:xx:xx rssi=-61dB
+[Ranger] Found paired accessory Eve address=xx:xx:xx:xx:xx:xx rssi=-71dB
+[Ranger] Found paired accessory Eve address=xx:xx:xx:xx:xx:xx rssi=-44dB
+[Ranger] Found paired accessory Eve address=xx:xx:xx:xx:xx:xx rssi=-85dB
+[Ranger] Found paired accessory Eve address=xx:xx:xx:xx:xx:xx rssi=-57dB
+[Ranger] Found paired accessory Eve address=xx:xx:xx:xx:xx:xx rssi=-69dB
+[Ranger] Found paired accessory Eve address=xx:xx:xx:xx:xx:xx rssi=-68dB
+[Ranger] Found paired accessory Eve Door 28B3 address=xx:xx:xx:xx:xx:xx rssi=-74dB
+[Ranger] Found paired accessory Eve address=xx:xx:xx:xx:xx:xx rssi=-72dB
+[Ranger] Found paired accessory Eve address=xx:xx:xx:xx:xx:xx rssi=-76dB
+[Ranger] Found paired accessory Eve address=xx:xx:xx:xx:xx:xx rssi=-73dB
+[Ranger] Found paired accessory Eve address=xx:xx:xx:xx:xx:xx rssi=-46dB
 ```
 
 Yours will likely show different devices with different signal strenghts and pairing information. The plugin will continuously scan for accessories in order to locate all in your environment and to get notifications from accessories. Additionally the scan will help you locate the BLE accessories that you want to pair with the plugin.

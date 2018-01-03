@@ -78,13 +78,10 @@ const RangerPlatform = class {
   }
 
   async _onHapAccessoryDiscovered(device) {
-
-    // New device
-    this.log(`New HAP-BLE accessory ${device.name} Address=${device.address} RSSI=${device.rssi}dB state=${device.state} isPaired=${device.isPaired}`);
-
     var accessoryForDevice = this._devices[device.address];
     if (!accessoryForDevice) {
-      // No accessory configured for the device
+      // No accessory configured for the device, ignore it completely
+      device.ignore = true;
       return;
     }
 

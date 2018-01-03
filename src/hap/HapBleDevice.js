@@ -22,11 +22,13 @@ class HapBleDevice extends EventEmitter {
     this.manufacturerData = manufacturerData;
     this._isAuthenticated = false;
 
+    this.uuid = peripheral.uuid;
     this.address = peripheral.address;
     this.name = peripheral.advertisement.localName;
     this.rssi = peripheral.rssi;
     this.state = 'disconnected';
     this.isPaired = manufacturerData.isPaired;
+    this.ignore = false;
 
     this.services = undefined;
     this.characteristics = undefined;

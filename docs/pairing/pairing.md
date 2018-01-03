@@ -11,15 +11,17 @@ This plugin automatically tries to pair to your accessories if they're unpaired.
 After you've added the plugin to your homebridge (see the [installation instructions](../install.md)) you should run homebridge. The log file will show all devices it sees in the logs, with lines similar to the following:
 
 ```text
-[Ranger] New HAP-BLE accessory Eve Energy A095 Address=ec:75:3f:9b:0e:e6 RSSI=-78dB isPaired=true
+[Ranger] Found unpaired accessory Eve Energy 7443 address=xx:xx:xx:xx:xx:xx rssi=-71dB
+[Ranger] Found paired accessory Eve address=xx:xx:xx:xx:xx:xx rssi=-69dB
 ```
 
 The line gives you a couple of items of knowledge:
 
-- The name of the accessory
-- The mac address of the accessory
-- The RSSI is an indicator of signal strength (the lower the negative number, the better.)
-- Wether the accessory reports itself as paired
+- The name of the accessory (as it announces itself.)
+- The bluetooth hardware address of the accessory
+- The rssi is an indicator of signal strength (the lower the negative number, the better.)
+
+Unpaired accessories will show in yellow color and be reported as such.
 
 ## Choosing the accessory
 
