@@ -77,7 +77,7 @@ class PairSetup {
 
     const payload = {};
     payload[TlvKeys.Value] = TLV8Encoder.encode(tlv);
-    payload[TlvKeys.ReturnResponse] = 1;
+    payload[TlvKeys.ReturnResponse] = new Buffer([1]);
 
     return {
       address: this._address,
@@ -105,7 +105,7 @@ class PairSetup {
 
     const payload = {};
     payload[TlvKeys.Value] = TLV8Encoder.encode(tlv);
-    payload[TlvKeys.ReturnResponse] = 1;
+    payload[TlvKeys.ReturnResponse] = new Buffer([1]);
 
     return {
       address: this._address,
@@ -160,7 +160,7 @@ class PairSetup {
 
     const payload = {};
     payload[TlvKeys.Value] = TLV8Encoder.encode(tlv);
-    payload[TlvKeys.ReturnResponse] = 1;
+    payload[TlvKeys.ReturnResponse] = new Buffer([1]);
 
     return {
       address: this._address,
@@ -175,12 +175,18 @@ class PairSetup {
     const error = response[TLVType.Error];
     if (error) {
       this.log(error);
-      // TODO: throw new HAPError(error);
       this._error = error;
       return;
     }
 
-    const value = TLV8Decoder.decode(response[TlvKeys.Value]);
+    const tlvValue = response[TlvKeys.Value];
+    if (!tlvValue) {
+      this.log(`No value in response.`);
+      this._error = new Error(`Missing pairing response value`);
+      return;
+    }
+
+    const value = TLV8Decoder.decode(tlvValue);
 
     this._state++;
     this.log(`Received pairing response for M${this._state}`);
@@ -253,8 +259,8 @@ class PairSetup {
   }
   getResult() {
     if (this._error) {
-      // TODO: Throw the error
-      this.log(`Pairing resulted in error ${error}.`);
+      this.log(`Pairing resulted in error ${this._error}.`);
+      throw this._error;
     }
 
     return this._result;

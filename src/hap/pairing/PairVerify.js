@@ -58,7 +58,7 @@ class PairVerify {
 
     const payload = {};
     payload[TlvKeys.Value] = TLV8Encoder.encode(tlv);
-    payload[TlvKeys.ReturnResponse] = 1;
+    payload[TlvKeys.ReturnResponse] = new Buffer([1]);
 
     return {
       address: this._address,
@@ -95,7 +95,7 @@ class PairVerify {
 
     const payload = {};
     payload[TlvKeys.Value] = TLV8Encoder.encode(tlv);
-    payload[TlvKeys.ReturnResponse] = 1;
+    payload[TlvKeys.ReturnResponse] = new Buffer([1]);
 
     return {
       address: this._address,
@@ -110,7 +110,6 @@ class PairVerify {
     const error = response[TLVType.Error];
     if (error) {
       this.log(error);
-      // TODO: throw new HAPError(error);
       this._error = error;
       return;
     }
