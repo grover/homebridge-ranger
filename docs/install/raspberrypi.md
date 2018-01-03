@@ -91,14 +91,6 @@ Install the noble dependencies for Raspbian by executing the commands:
 sudo apt-get install bluetooth bluez libbluetooth-dev libudev-dev
 ```
 
-## Install noble
-
-Please follow the installation instructions of the prerequisites from [noble](https://www.npmjs.com/package/noble) and finally install noble itself:
-
-```bash
-sudo npm install -g noble --unsafe-perm
-```
-
 ## Install this plugin
 
 And finally install homebridge-ranger with:

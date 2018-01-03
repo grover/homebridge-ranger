@@ -14,27 +14,9 @@ In Terminal:
 npm install -g homebridge --unsafe-perm
 ```
 
-## Install noble
+## Install noble dependencies
 
-Please follow the installation instructions of the prerequisites from [noble](https://www.npmjs.com/package/noble), however don't install noble itself.
-
-### On macOS High Sierra
-
-In Terminal:
-
-```bash
-npm install -g github:grover/noble#f7f16a2acd29cdd1e264189e7bfcb2b9a7f1e366
-```
-
-This patch is only necessary on High Sierra due to changes in the Bluetooth implementation there.
-
-### On other versions of macOS
-
-In Terminal:
-
-```bash
-npm install -g noble --unsafe-perm
-```
+Please follow the installation instructions of the prerequisites from [noble](https://www.npmjs.com/package/noble), however it is not necessary to install noble itself.
 
 ## Install this plugin
 
@@ -43,6 +25,15 @@ In Terminal:
 ```bash
 npm install -g homebridge-ranger --unsafe-perm
 ```
+
+### On macOS High Sierra
+
+The post install step of ```homebridge-ranger``` will automatically install a patched version of
+noble for [macOS High Sierra](https://github.com/grover/noble/tree/macos_highsierra). This version
+is not necessary AFAIK on earlier macOS versions and other platforms.
+
+Unfortunately there were changes in the Bluetooth Stack in High Sierra, which make this
+necessary.
 
 ## Create the skeleton homebridge configuration
 
