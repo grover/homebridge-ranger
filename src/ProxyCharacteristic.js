@@ -60,7 +60,7 @@ module.exports = {
       _getCharacteristicValue(callback) {
         this.log(`Returning characteristic ${this.UUID}`);
 
-        this._accessor.readCharacteristic()
+        this._accessor.readCharacteristic(this._hapProps)
           .then(value => {
             callback(undefined, value);
           })
