@@ -12,10 +12,6 @@ const UUIDFormatter = require('./../UUIDFormatter');
  * List of services that should not be exposed to HomeKit via IP.
  */
 const hiddenServices = [
-  // Accessory Information is added by homebridge
-  // TODO: Need a VIA
-  '0000003e0000100080000026bb765291',
-
   // HAP-BLE 2.0 Protocol Information Service
   '000000a20000100080000026bb765291',
 

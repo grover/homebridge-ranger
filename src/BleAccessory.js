@@ -2,7 +2,9 @@
 
 const inherits = require('util').inherits;
 const AccessoryDatabase = require('./hap/AccessoryDatabase');
+
 const HapExecutor = require('./hap/HapExecutor');
+const HapCharacteristicAccessor = require('./hap/HapCharacteristicAccessor');
 
 const PairSetup = require('./hap/pairing/PairSetup');
 
@@ -24,14 +26,7 @@ class BleAccessory {
     this._device;
     this._services = [];
 
-    /**
-     * Create default services for the accessory:
-     * 
-     * - Accessory Information Service (tbd)
-     * - Bridging State Service
-     * 
-     */
-    this.createServices(this.api);
+    this._createServices(this.api);
   }
 
   async assignDevice(device) {
@@ -39,36 +34,96 @@ class BleAccessory {
 
     this.accessoryDatabase = await AccessoryDatabase.create(this.api, device);
     this.hapExecutor = new HapExecutor(this.log, device, this.accessoryDatabase);
+    this.hapAccessor = new HapCharacteristicAccessor(this.log, this.hapExecutor);
 
-    // Build the service list first
-    const services = this.accessoryDatabase.services
-      .map(service => {
-        this.log(`Publishing BLE service ${service.UUID}`);
-        return new Service.ProxyService(this.api, this.log, this.hapExecutor, service);
-      });
-
-    this._services = this._services.concat(services);
-
-    if (!this._device.isPaired) {
-      this.log(`Device is not paired yet, pairing now.`);
-
-      const pairSetup = new PairSetup(this.log, this.accessoryDatabase, this.config.pin);
-      this.hapExecutor.run(pairSetup)
-        .then(result => {
-          this.accessoryDatabase.pairing = result;
-          this.accessoryDatabase.save();
-          this._device.disconnect();
-          this.log(`Pairing completed.`);
-        })
-        .catch(e => {
-          this.log(`Pairing failed: ${JSON.stringify(e)}`, e);
-        });
-    }
+    await this._ensureDeviceIsPaired();
+    await this._refreshAccessoryInformation();
+    this._createServiceAndCharacteristicsProxies();
 
     this._device.on('disconnected-event', this._handleDisconnectedDeviceEvents.bind(this));
     this._device.on('connected-event', this._handleNotification.bind(this));
 
     this.log(`Accessory found.`);
+  }
+
+  async _ensureDeviceIsPaired() {
+    if (!this._device.isPaired) {
+      this.log(`Device is not paired yet, pairing now.`);
+
+      const pairSetup = new PairSetup(this.log, this.accessoryDatabase, this.config.pin);
+      try {
+        const result = await this.hapExecutor.run(pairSetup);
+        this.accessoryDatabase.pairing = result;
+        this.accessoryDatabase.save();
+        this._device.disconnect();
+        this.log(`Pairing completed.`);
+      }
+      catch (e) {
+        this.log(`Pairing failed: ${JSON.stringify(e)}`, e);
+        throw e;
+      }
+    }
+  }
+
+  async _refreshAccessoryInformation() {
+    /**
+     * 
+     * Unfortunately Homebridge/HAP-NodeJS is treating this service in a
+     * stupidly special way, which prevents us from running the regular 
+     * proxying for it. And unfortunately we can't 
+     * 
+     * TODO: 
+     * - Run through the accessory database and retrieve the values of all
+     *   characteristics that pertain to accessory information
+     * - Migrate them into the respective characteristics of the 'fake'
+     *   accessory information service.
+     * 
+     */
+
+    const accessoryInformationService = '0000003e0000100080000026bb765291';
+    const characteristicsToMove = [
+      { ble: '000000200000100080000026bb765291', characteristic: Characteristic.Manufacturer },
+      { ble: '000000210000100080000026bb765291', characteristic: Characteristic.Model },
+      { ble: '000000230000100080000026bb765291', characteristic: Characteristic.Name },
+      { ble: '000000300000100080000026bb765291', characteristic: Characteristic.SerialNumber },
+      { ble: '000000520000100080000026bb765291', characteristic: Characteristic.FirmwareRevision },
+      { ble: '000000530000100080000026bb765291', characteristic: Characteristic.HardwareRevision },
+      //{ ble: '000000a60000100080000026bb765291', characteristic: Characteristic.AccessoryFlags }
+    ];
+
+    for (let i = 0; i < characteristicsToMove.length; i++) {
+      const c = characteristicsToMove[i];
+      const address = {
+        service: accessoryInformationService,
+        characteristic: c.ble
+      };
+
+      const characteristic = this._accessoryInformationService.getCharacteristic(c.characteristic);
+
+      const hapProps = this.accessoryDatabase.getCharacteristic(address);
+      if (hapProps) {
+        try {
+          const value = await this.hapAccessor.readCharacteristic(hapProps);
+          this.log(`Retrieved accessory information ${characteristic.displayName}=${value}`);
+          characteristic.setValue(value);
+        }
+        catch (e) {
+          // Ignore characteristics that fail - for now.
+          this.log(`Failed to retrieve characteristic ${characteristic.displayName} for accessory information.`);
+        }
+      }
+    };
+  }
+
+  _createServiceAndCharacteristicsProxies() {
+    const services = this.accessoryDatabase.services
+      .filter(svc => svc.UUID !== Service.AccessoryInformation.UUID)
+      .map(service => {
+        this.log(`Publishing BLE service ${service.UUID} via proxy`);
+        return new Service.ProxyService(this.api, this.log, this.hapExecutor, service);
+      });
+
+    this._services = this._services.concat(services);
   }
 
   _handleDisconnectedDeviceEvents() {
@@ -107,14 +162,22 @@ class BleAccessory {
   }
 
   getServices() {
-    return this._services.filter(service => !service.isHidden);
+    return this._services;
   }
 
-  createServices(homebridge) {
-    this._services.push(this.getBridgingStateService());
+  _createServices(homebridge) {
+    this._services.push(
+      this._getAccessoryInformationService(),
+      this._getBridgingStateService()
+    );
   }
 
-  getBridgingStateService() {
+  _getAccessoryInformationService() {
+    this._accessoryInformationService = new Service.AccessoryInformation();
+    return this._accessoryInformationService;
+  }
+
+  _getBridgingStateService() {
     this._bridgingService = new Service.BridgingState();
 
     this._bridgingService.getCharacteristic(Characteristic.Reachable)
@@ -127,13 +190,24 @@ class BleAccessory {
   identify(callback) {
     this.log(`Identify requested on ${this.name}`);
 
-    // Look up the accessory information service, identify Characteristic
-    // from the accessory database and write a '1' in there.
-    const svc = this._getService(Service.AccessoryInformation.UUID);
-    if (svc) {
-      const c = svc.getCharacteristic(Characteristic.Identify);
-      c.setValue(true, callback);
+    const address = {
+      service: '0000003e0000100080000026bb765291',
+      characteristic: '000000140000100080000026bb765291'
+    };
+
+    const hapProps = this.accessoryDatabase.getCharacteristic(address);
+    if (!hapProps) {
+      this.log('Failed to locate Identify characteristic.');
+      callback(undefined);
     }
+
+    this.hapAccessor.writeCharacteristic(hapProps, true)
+      .then(() => {
+        callback(undefined);
+      })
+      .catch(e => {
+        callback(e);
+      });
   }
 
   _getService(uuid) {
