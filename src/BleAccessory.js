@@ -70,13 +70,7 @@ class BleAccessory {
      * 
      * Unfortunately Homebridge/HAP-NodeJS is treating this service in a
      * stupidly special way, which prevents us from running the regular 
-     * proxying for it. And unfortunately we can't 
-     * 
-     * TODO: 
-     * - Run through the accessory database and retrieve the values of all
-     *   characteristics that pertain to accessory information
-     * - Migrate them into the respective characteristics of the 'fake'
-     *   accessory information service.
+     * proxying for it.
      * 
      */
 

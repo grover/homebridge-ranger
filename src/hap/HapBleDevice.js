@@ -69,8 +69,6 @@ class HapBleDevice extends EventEmitter {
           reject(error);
         }
 
-        // TODO: Issue a pair verify if we just connected
-
         this._discoverServicesAndCharacteristics()
           .then(() => {
             this._subscribeToIndicatingCharacteristics();

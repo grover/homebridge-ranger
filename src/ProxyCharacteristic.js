@@ -40,9 +40,6 @@ module.exports = {
 
         this.on('get', this._getCharacteristicValue.bind(this));
         this.on('set', this._setCharacteristicValue.bind(this));
-
-        // TODO: Does this characteristic support events? If so, subscribe
-        // to the events on the device (via GSN, when that changes.)
       }
 
       _setCharacteristicValue(value, callback) {
