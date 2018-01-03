@@ -73,7 +73,9 @@ class HapBleDevice extends EventEmitter {
 
         this._discoverServicesAndCharacteristics()
           .then(() => {
-            this._subscribeToIndicatingCharacteristics();
+            if (this.isPaired) {
+              this._subscribeToIndicatingCharacteristics();
+            }
           })
           .then(resolve)
           .catch(reject);
@@ -176,7 +178,7 @@ class HapBleDevice extends EventEmitter {
   read(c) {
     return new Promise((resolve, reject) => {
       this._registerPendingOperation(reject);
-      c.once('read', (data, isNotification) => {
+      c.once('data', (data, isNotification) => {
         resolve(data);
         this._unregisterPendingOperation(reject);
       });
