@@ -28,13 +28,9 @@ class HapExecutor {
    */
   run(cmd) {
     return this._queue.push(async () => {
-      // TODO: Retry if disconnected (restart cmd if necessary!)
-      // TODO: If disconnected, connect
-      // TODO: If just connected, verify
-
-      await this._ensureConnection();
-      await this._executeCommand(cmd);
-      return cmd.getResult();
+      await this._establishSecureConnection();
+      const result = await this._executeCommand(cmd);
+      return result;
     });
   }
 
@@ -42,10 +38,7 @@ class HapExecutor {
     while (cmd.hasMoreRequests()) {
       // request is a structure with op, address, cid and payload
       const request = cmd.getRequest();
-
-
       const c = this._device.getCharacteristic(request.address);
-
       const transactionId = this._transactionId++ % 255;
 
       // Encode the payload and build the payload fragments
@@ -69,11 +62,12 @@ class HapExecutor {
 
       cmd.handleResponse(response);
     }
+
+    return cmd.getResult();
   }
 
   _buildPacket(op, transactionId, cid, payload) {
     payload = payload || [];
-
 
     const buffer = new Buffer(7 + payload.length);
     buffer.writeUInt8(0, 0);
@@ -136,37 +130,59 @@ class HapExecutor {
     return Buffer.alloc(0);
   }
 
-  async _ensureConnection() {
+  async _establishSecureConnection() {
+    let isConnected = false;
+    for (let i = 0; i < 2 && !isConnected; i++) {
+      await this._connectToBleDevice();
+      isConnected = await this._establishSessionSecurity();
+    }
+
+    if (!isConnected) {
+      throw new Error('Failed to establish connection to the device');
+    }
+
+    return isConnected;
+  }
+
+  async _connectToBleDevice() {
     if (this._device.state !== 'connected') {
       this.log(`Connecting to ${this._device.name}`);
       this._sessionCrypto.reset();
       await this._device.connect();
       this.log(`Connected to ${this._device.name}`);
     }
+  }
 
-    if (this._sessionCrypto.isExpired()) {
+  async _establishSessionSecurity() {
+    if (!this._hasPairingInformation()) {
+      // No pairing information yet, skip establishing session security and
+      // pretend that we're done.
+      return true;
+    }
 
-
-      // Check the existence of the accessory database while we have other 
-      // HapExecutor instances without the accessory database
-      if (this._accessoryDatabase && this._accessoryDatabase.pairing) {
-        this.log(`Securing connection to ${this._device.name}`);
-        const pairVerify = new PairVerify(this.log, this._accessoryDatabase);
-        await this._executeCommand(pairVerify);
-
-        try {
-          const sessionKeys = pairVerify.getResult();
-          this._sessionCrypto.setSessionKeys(sessionKeys);
-          this.log(`Secure connection to ${this._device.name} established.`);
-        }
-        catch (e) {
-          this._sessionCrypto.reset();
-          await this._device.disconnect();
-          this.log(`Failed to establish secure session to ${this._device.name}.`);
-          throw e;
-        }
+    let isSecure = this._sessionCrypto.isSecureSessionValid();
+    if (!isSecure) {
+      this.log(`Securing connection to ${this._device.name}`);
+      const pairVerify = new PairVerify(this.log, this._accessoryDatabase);
+      try {
+        const sessionKeys = await this._executeCommand(pairVerify);
+        this._sessionCrypto.setSessionKeys(sessionKeys);
+        this.log(`Secure connection to ${this._device.name} established.`);
+        isSecure = true;
+      }
+      catch (e) {
+        this._sessionCrypto.reset();
+        await this._device.disconnect();
+        this.log(`Failed to establish secure session to ${this._device.name}. Reason: ${e.message}`);
+        isSecure = false;
       }
     }
+
+    return isSecure;
+  }
+
+  _hasPairingInformation() {
+    return this._accessoryDatabase && this._accessoryDatabase.pairing;
   }
 };
 

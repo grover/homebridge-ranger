@@ -33,6 +33,7 @@ class HapBleDevice extends EventEmitter {
 
     this.executor = new HapExecutor(this.log, this);
 
+    this._pendingOperations = [];
     this._transactionId = Math.floor(Math.random() * 255);
 
     this._peripheral.on('connect', this._onConnected.bind(this));
@@ -108,6 +109,9 @@ class HapBleDevice extends EventEmitter {
     // Reset the discovered state
     this.services = undefined;
     this.characteristics = undefined;
+
+    // Cancel pending BLE operations
+    this._rejectPendingOperations();
   }
 
   _discoverServicesAndCharacteristics() {
@@ -157,22 +161,27 @@ class HapBleDevice extends EventEmitter {
   write(c, buffer) {
     // Send the packet
     return new Promise((resolve, reject) => {
-      c.write(buffer, false, () => {
-        // TODO: Error?
+
+      this._registerPendingOperation(reject);
+
+      c.once('write', () => {
         resolve();
+        this._unregisterPendingOperation(reject);
       });
+
+      c.write(buffer, false);
     });
   }
 
   read(c) {
     return new Promise((resolve, reject) => {
-      c.read((error, data) => {
-        if (error) {
-          reject(error);
-        }
-
+      this._registerPendingOperation(reject);
+      c.once('read', (data, isNotification) => {
         resolve(data);
+        this._unregisterPendingOperation(reject);
       });
+
+      c.read();
     });
   }
 
@@ -184,6 +193,28 @@ class HapBleDevice extends EventEmitter {
     if (hasGSNChanged) {
       this.log(`Device ${this.name} issues a disconnected event.`);
       this.emit('disconnected-event');
+    }
+  }
+
+  _registerPendingOperation(reject) {
+    this._pendingOperations.push(reject);
+  }
+
+  _unregisterPendingOperation(reject) {
+    const index = this._pendingOperations.indexOf(reject);
+    if (index !== -1) {
+      this._pendingOperations.splice(index, 1);
+    }
+  }
+
+  _rejectPendingOperations() {
+    if (this._pendingOperations.length !== 0) {
+      const e = new Error('Disconnected');
+
+      this._pendingOperations.forEach(reject => {
+        reject(e);
+      });
+      this._pendingOperations = [];
     }
   }
 

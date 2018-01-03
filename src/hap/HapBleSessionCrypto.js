@@ -120,9 +120,9 @@ class HapBleSessionCrypto {
     return [high, low]
   }
 
-  isExpired() {
-    return !this.isEncrypted()
-      || moment().isAfter(this._nextPairVerify);
+  isSecureSessionValid() {
+    return this.isEncrypted()
+      && moment().isBefore(this._nextPairVerify);
   }
 
   isEncrypted() {
