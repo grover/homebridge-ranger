@@ -59,3 +59,11 @@ typings/
 
 # Ignore vscode settings
 .vscode
+
+# Ignore my stuff from the tests folder
+tests/accessories
+tests/config*.json
+tests/hap
+tests/pairing
+tests/persist
+tests/ranger
