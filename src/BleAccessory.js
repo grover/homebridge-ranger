@@ -120,7 +120,7 @@ class BleAccessory {
       .filter(svc => svc.UUID !== Service.AccessoryInformation.UUID)
       .map(service => {
         this.log(`Publishing BLE service ${service.UUID} via proxy`);
-        return new Service.ProxyService(this.api, this.log, this.hapExecutor, service);
+        return new Service.ProxyService(this.api, this.log, this.hapAccessor, service);
       });
 
     this._services = this._services.concat(services);
