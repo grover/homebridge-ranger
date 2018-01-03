@@ -118,6 +118,7 @@ class BleAccessory {
   _createServiceAndCharacteristicsProxies() {
     const services = this.accessoryDatabase.services
       .filter(svc => svc.UUID !== Service.AccessoryInformation.UUID)
+      .filter(svc => svc.UUID !== '00000055-0000-1000-8000-0026BB765291')
       .map(service => {
         this.log(`Publishing BLE service ${service.UUID} via proxy`);
         return new Service.ProxyService(this.api, this.log, this.hapAccessor, service);
