@@ -1,6 +1,6 @@
 {
   "name": "homebridge-ranger",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "A HomeKit range extender for Bluetooth Low Energy (BLE) accessories.",
   "main": "src/index.js",
   "directories": {
