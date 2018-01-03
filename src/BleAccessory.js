@@ -46,6 +46,10 @@ class BleAccessory {
     this.log(`Accessory found.`);
   }
 
+  hasDevice() {
+    return this._device !== undefined;
+  }
+
   async _ensureDeviceIsPaired() {
     if (!this._device.isPaired) {
       this.log(`Device is not paired yet, pairing now.`);

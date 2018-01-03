@@ -57,7 +57,13 @@ const RangerPlatform = class {
     this._accessories = devices.map(device => {
       this.log(`Found device in config: "${device.name}"`);
 
-      return new BleAccessory(this.api, this.log, device);
+      if (this._devices[device.address]) {
+        throw new Error('Multiple accessories configured with the same MAC address.');
+      }
+
+      const accessory = new BleAccessory(this.api, this.log, device);
+      this._devices[device.address] = accessory;
+      return accessory;
     });
   }
 
@@ -66,8 +72,9 @@ const RangerPlatform = class {
   }
 
   accessories(callback) {
-    // Save the callback, we're 
+    // Save the callback, we'll need it later :)
     this._accessoriesCallback = callback;
+    this._publishAccessories();
   }
 
   async _onHapAccessoryDiscovered(device) {
@@ -75,20 +82,34 @@ const RangerPlatform = class {
     // New device
     this.log(`New HAP-BLE accessory ${device.name} Address=${device.address} RSSI=${device.rssi}dB state=${device.state} isPaired=${device.isPaired}`);
 
-    var accessoryForDevice = this._accessories
-      .filter(a => a.config.address === device.address);
-
-    if (accessoryForDevice.length > 1) {
-      this.log('Too many accessories configured with the same device address');
+    var accessoryForDevice = this._devices[device.address];
+    if (!accessoryForDevice) {
+      // No accessory configured for the device
       return;
     }
 
-    if (accessoryForDevice.length === 1) {
-      await accessoryForDevice[0].assignDevice(device);
+    await accessoryForDevice.assignDevice(device);
+    this._publishAccessories();
+  }
 
-      // HACK: Might not be set yet??
-      // TODO: Only after all configured accessories have been discovered
-      this._accessoriesCallback(this._accessories);
+  _publishAccessories() {
+    if (this._accessoriesCallback) {
+      const allFound = this._allDevicesFound();
+      if (allFound) {
+        this._accessoriesCallback(this._accessories);
+      }
+      else {
+        this.log(`Not all accessories have their devices. Not publishing yet.`);
+      }
     }
+  }
+
+  _allDevicesFound() {
+    return this._accessories.every(accessory => {
+      if (!accessory.hasDevice()) {
+        this.log(`Waiting for accessory: ${accessory.name}`);
+      }
+      return accessory.hasDevice();
+    });
   }
 }
