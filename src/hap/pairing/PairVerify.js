@@ -14,7 +14,7 @@ const TLVErrors = require('./TLVErrors');
 const TlvKeys = require('./../TlvKeys');
 const TLVType = require('./TLVType');
 const TLV8Decoder = require('./../Tlv8Decoder');
-const TLV8Encoder = require('./../Tlv8Encoder2');
+const TLV8Encoder = require('./../Tlv8Encoder');
 
 class PairVerify {
   constructor(log, accessoryDatabase) {

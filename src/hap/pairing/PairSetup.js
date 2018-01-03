@@ -11,7 +11,7 @@ const uuid = require('uuid/v4');
 const OpCodes = require('./../OpCodes');
 
 const TLV8Decoder = require('./../Tlv8Decoder');
-const TLV8Encoder = require('./../Tlv8Encoder2');
+const TLV8Encoder = require('./../Tlv8Encoder');
 const TlvKeys = require('./../TlvKeys');
 const TLVType = require('./TLVType');
 

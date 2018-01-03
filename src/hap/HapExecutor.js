@@ -2,7 +2,7 @@
 
 const SequentialTaskQueue = require('sequential-task-queue').SequentialTaskQueue;
 
-const TLV8Encoder = require('./Tlv8Encoder2');
+const TLV8Encoder = require('./Tlv8Encoder');
 const TLV8Decoder = require('./Tlv8Decoder');
 const PairVerify = require('./pairing/PairVerify');
 
