@@ -36,4 +36,15 @@ start seeing issues, try reducing the number of paired accessories. The limit is
 really in the Bluetooth stack of the system running Homebridge and thus the limitations
 described on the [noble](https://github.com/sandeepmistry/noble) page apply.
 
+### Using this plugin with other homebridge plugins
+
+I have not tested running this plugin in parallel with other homebridge plugins. It'll likely work, but take note that there are some timing considerations in the HAP BLE protocol, which may render the connection to the Bluetooth accessory unstable.
+
+Also the plugin will postpone the start of homebridge until it's seen all 
+configured Bluetooth HomeKit Accessories.
+
+I'd strongly encourage you to run this on a dedicated Raspberry Pi and not 
+share the Homebridge instance with other plugins. You could always run 
+multiple homebridge instances on the same system and they'll not affect each other.
+
 Continue to [Requirements](requirements.md)

@@ -77,11 +77,21 @@ sudo apt-get install libavahi-compat-libdnssd-dev
 sudo npm install -g homebridge --unsafe-perm
 ```
 
-### Using this plugin with other homebridge plugins
+## Bluetooth issues
 
-I have not tested running this plugin in parallel with other homebridge plugins. It'll likely work, but take note that there are some timing considerations in the HAP BLE protocol, which may render the connection to the Bluetooth accessory unstable.
+Please be aware of the following problems in noble, which affect the bluetooth
+connections to your accessories:
 
-I'd strongly encourage you to run this on a dedicated Raspberry Pi.
+- [Noble #465](https://github.com/sandeepmistry/noble/issues/465)
+- [Noble #480](https://github.com/sandeepmistry/noble/issues/480)
+- [Noble #474](https://github.com/sandeepmistry/noble/issues/474)
+
+The install script downloads a version of noble, which is supposed to circumvent
+the issues. At the end connections to accessories work, sometimes you'll still
+see immediate disconnects. Please restart homebridge if you see those issues.
+
+I'm working on it. My recommendation at the moment is to report the issues in the
+noble project.
 
 ## Install noble dependencies
 
