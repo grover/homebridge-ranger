@@ -67,7 +67,7 @@ class HapExecutor {
     let payload = Buffer.alloc(0);
     while (true) {
       const rxPacket = await this._device.read(c);
-      if (!rxPacket) {
+      if (!rxPacket || rxPacket.length === 0) {
         break;
       }
 
