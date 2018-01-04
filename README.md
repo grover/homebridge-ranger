@@ -13,7 +13,7 @@ Bridges existing HomeKit BLE accessories to IP via [Homebridge](https://github.c
 Please read the documentation in its entirety as this plugin is a bit more complex than your usual Homebridge plugin.
 
 - [Why](docs/why.md)
-- [Warnings](docs/warnings.md)
+- [A few words of caution](docs/warnings.md)
 - [Requirements](docs/requirements.md)
 - [Installation instructions](docs/install.md)
   - [Raspberry Pi](docs/install/raspberrypi.md)

@@ -6,7 +6,7 @@ In addition there's a couple of things I urge you not to do via this plugin and 
 
 ## Firmware upgrades
 
-Do not upgrade the firmware of your accessory ia this Plugin. Upgrading the firmware requires the exchange of large amounts of binary data. There's likely aspects of the protocols that haven't been understood or implemented wrong. Running a firmware update through this plugin may render you accessory useless.
+Do not upgrade the firmware of your accessory via this plugin. Upgrading the firmware requires the exchange of large amounts of binary data. There's likely aspects of the protocols that haven't been understood or implemented wrong. Running a firmware update through this plugin may brick you accessory.
 
 If you really need to upgrade the firmware of the device:
 
@@ -38,13 +38,10 @@ described on the [noble](https://github.com/sandeepmistry/noble) page apply.
 
 ### Using this plugin with other homebridge plugins
 
-I have not tested running this plugin in parallel with other homebridge plugins. It'll likely work, but take note that there are some timing considerations in the HAP BLE protocol, which may render the connection to the Bluetooth accessory unstable.
+I have not tested this plugin in parallel with other homebridge plugins. It'll likely work, but take note that there are some timing considerations in the HAP BLE protocol, which may render the connection to the Bluetooth accessory unstable.
 
-Also the plugin will postpone the start of homebridge until it's seen all 
-configured Bluetooth HomeKit Accessories.
+Also the plugin will postpone the start of homebridge until it's connected to all configured Bluetooth HomeKit Accessories. This may delay the start for other plugins too.
 
-I'd strongly encourage you to run this on a dedicated Raspberry Pi and not 
-share the Homebridge instance with other plugins. You could always run 
-multiple homebridge instances on the same system and they'll not affect each other.
+I'd strongly encourage you to run this on a dedicated Raspberry Pi Zero W and not share the Homebridge instance with other plugins. You could always run multiple homebridge instances on the same system and they'll not affect each other.
 
 Continue to [Requirements](requirements.md)
