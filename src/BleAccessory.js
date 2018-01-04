@@ -205,6 +205,12 @@ class BleAccessory {
       callback(undefined);
     }
 
+    // HACK: Force this characteristic to a boolean
+    // Elgato Eve Firmware 1.3.1 reports the Identify characteristic as a TLV8.
+    // TODO: Should AccessoryDatabase force known/predefined characteristics to
+    // their respective type?
+    hapProps.format = 'bool';
+
     this.hapAccessor.writeCharacteristic(hapProps, true)
       .then(() => {
         callback(undefined);
