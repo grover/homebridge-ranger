@@ -114,9 +114,14 @@ class BleAccessory {
   }
 
   _createServiceAndCharacteristicsProxies() {
+    const blacklist = [
+      Service.AccessoryInformation.UUID,
+      '00000055-0000-1000-8000-0026BB765291', // HAP-BLE Pairing Service
+      '000000A2-0000-1000-8000-0026BB765291', // HAP-BLE Protocol Information Service
+    ];
+
     const services = this.accessoryDatabase.services
-      .filter(svc => svc.UUID !== Service.AccessoryInformation.UUID)
-      .filter(svc => svc.UUID !== '00000055-0000-1000-8000-0026BB765291')
+      .filter(svc => !blacklist.includes(svc.UUID))
       .map(service => {
         this.log(`Publishing BLE service ${service.UUID} via proxy`);
         return new Service.ProxyService(this.api, this.log, this.hapAccessor, service);
