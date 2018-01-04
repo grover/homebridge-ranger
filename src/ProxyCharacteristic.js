@@ -40,6 +40,8 @@ module.exports = {
 
         this.on('get', this._getCharacteristicValue.bind(this));
         this.on('set', this._setCharacteristicValue.bind(this));
+        this.on('subscribe', this._subscribeCharacteristic.bind(this));
+        this.on('unsubscribe', this._unsubscribeCharacteristic.bind(this));
       }
 
       _setCharacteristicValue(value, callback) {
@@ -65,6 +67,14 @@ module.exports = {
             callback(reason);
           });
       }
+
+      _subscribeCharacteristic() {
+        this._accessor.subscribeCharacteristic(this._hapProps);
+      }
+
+      _unsubscribeCharacteristic() {
+        this._accessor.unsubscribeCharacteristic(this._hapProps);
+      };
 
       notificationPending() {
         this._accessor.readCharacteristic(this._hapProps)
