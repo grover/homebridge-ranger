@@ -227,7 +227,7 @@ class HapBleDevice extends EventEmitter {
           c.subscribe();
 
           c.on('data', (data, isNotification) => {
-            if (data.length == 0 || isNotification) {
+            if ((data && data.length === 0) || isNotification) {
               const address = {
                 service: svc.uuid,
                 characteristic: c.uuid
