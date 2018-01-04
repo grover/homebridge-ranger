@@ -14,7 +14,7 @@ if (os.platform() === 'darwin') {
     // there and I made some patches too, to make it work. Pull my version from
     // github instead of the default noble dependency.
     child_process.execSync(
-      "npm install --no-save github:grover/noble#f7f16a2acd29cdd1e264189e7bfcb2b9a7f1e366",
+      "npm install --no-save github:grover/noble#f7f16a2acd29cdd1e264189e7bfcb2b9a7f1e366 --unsafe-perm",
       { stdio: [0, 1, 2] });
 
   }
@@ -33,6 +33,6 @@ else if (os.platform() === 'linux') {
    * 
    */
   child_process.execSync(
-    'npm install --no-save github:grover/noble#730865a5152d6d767a2d1413c0c27eac4bde3df5',
+    'npm install --no-save github:grover/noble#730865a5152d6d767a2d1413c0c27eac4bde3df5 --unsafe-perm',
     { stdio: [0, 1, 2] });
 }
