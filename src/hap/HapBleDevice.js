@@ -219,7 +219,7 @@ class HapBleDevice extends EventEmitter {
     this.isPaired = data.isPaired;
 
     if (hasGSNChanged) {
-      this.log(`Device ${this.name} issues a disconnected event.`);
+      this.log(`Device ${this.name} issued a disconnected event.`);
       this.emit('disconnected-event');
     }
   }
