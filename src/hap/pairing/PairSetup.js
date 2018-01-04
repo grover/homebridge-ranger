@@ -31,6 +31,7 @@ class PairSetup {
     this.log = log;
 
     this._state = 0;
+    this._acknowledgeFragment = false;
     this._address = {
       service: '000000550000100080000026bb765291',
       characteristic: '0000004c0000100080000026bb765291'
@@ -47,14 +48,22 @@ class PairSetup {
     this._rangerProof;
     this._rangerLTPK;
     this._rangerLTSK;
+    this._reassemblyBuffer = Buffer.alloc(0);
     this._srpSharedSecret;
   }
 
   hasMoreRequests() {
-    return this._error === undefined && this._state < 6;
+    return this._error === undefined
+      && (this._state < 6 || this._acknowledgeFragment);
   }
 
   getRequest() {
+    if (this._acknowledgeFragment) {
+      this.log('Acknowledging received fragment.');
+      this._acknowledgeFragment = false;
+      return this.acknowledgeFragment();
+    }
+
     this._state++;
     this.log(`Returning pairing request for M${this._state}`);
 
@@ -158,8 +167,38 @@ class PairSetup {
     tlv[TLVType.State] = Buffer.from([this._state]);
     tlv[TLVType.EncryptedData] = Buffer.concat([ciphertextBuffer, macBuffer]);
 
+    let value = TLV8Encoder.encode(tlv);
+    // if (this._usesFragments) {
+    //   this.log(`Packing HAP-Value in FragmentData`);
+    //   const fragmentBuffer = {};
+    //   fragmentBuffer[TLVType.FragmentData] = value;
+    //   value = TLV8Encoder.encode(fragmentBuffer);
+    // }
+
     const payload = {};
-    payload[TlvKeys.Value] = TLV8Encoder.encode(tlv);
+    payload[TlvKeys.Value] = value;
+    payload[TlvKeys.ReturnResponse] = new Buffer([1]);
+
+    return {
+      address: this._address,
+      opcode: OpCodes.CharacteristicWrite,
+      cid: this._cid,
+      payload: payload,
+      insecure: true
+    };
+  }
+
+  acknowledgeFragment() {
+
+    this.log(`Sending acknowledgement fragment. More data needed in response.`);
+
+    const tlv = {};
+    tlv[TLVType.FragmentData] = Buffer.alloc(0); // Empty buffer signals ACK
+
+    let value = TLV8Encoder.encode(tlv);
+
+    const payload = {};
+    payload[TlvKeys.Value] = value;
     payload[TlvKeys.ReturnResponse] = new Buffer([1]);
 
     return {
@@ -179,28 +218,56 @@ class PairSetup {
       return;
     }
 
-    const tlvValue = response[TlvKeys.Value];
-    if (!tlvValue) {
-      this.log(`No value in response.`);
-      this._error = new Error(`Missing pairing response value`);
+    this._acknowledgeFragment = false;
+
+    const decodedResponse = this._decodeResponse(response);
+    if (decodedResponse.moreDataNeeded) {
+      this.log(`Device sent fragment. More data needed in response.`);
+      this._acknowledgeFragment = true;
       return;
     }
-
-    const value = TLV8Decoder.decode(tlvValue);
 
     this._state++;
     this.log(`Received pairing response for M${this._state}`);
 
     switch (this._state) {
       case 2:
-        return this.handleM2Response(value);
+        return this.handleM2Response(decodedResponse.value);
 
       case 4:
-        return this.handleM4Response(value);
+        return this.handleM4Response(decodedResponse.value);
 
       case 6:
-        return this.handleM6Response(value);
+        return this.handleM6Response(decodedResponse.value);
     }
+  }
+
+  _decodeResponse(response) {
+    const valueAsTlv = response[TlvKeys.Value];
+    let value = TLV8Decoder.decode(valueAsTlv);
+
+    const fragmentData = value[TLVType.FragmentData];
+    if (fragmentData) {
+      this.log(`Device is using fragment buffers for pairing.`);
+      this._acknowledgeFragment = true;
+      this._reassemblyBuffer = Buffer.concat([this._reassemblyBuffer, fragmentData]);
+
+      return {
+        moreDataNeeded: true
+      };
+    }
+
+    const fragmentLast = value[TLVType.FragmentLast];
+    if (fragmentLast) {
+      const reassembledData = Buffer.concat([this._reassemblyBuffer, fragmentLast]);
+      value = TLV8Decoder.decode(reassembledData);
+
+      this._reassemblyBuffer = Buffer.alloc(0);
+    }
+
+    return {
+      value: value
+    };
   }
 
   handleM2Response(response) {
@@ -216,7 +283,7 @@ class PairSetup {
       this._srp.checkM2(accessoryProof);
     }
     catch (err) {
-      this.log('Error while checking accessory proof', err);
+      this.log(`Error while checking accessory proof: ${accessoryProof}`, err);
       this._error = err;
     }
   }
@@ -255,7 +322,7 @@ class PairSetup {
       accessoryLTPK: accessoryLTPK.toString('hex'),
     };
 
-    thislog(`Pairing result:\n${JSON.stringify(this._result)}`);
+    this.log(`Pairing result:\n${JSON.stringify(this._result)}`);
   }
   getResult() {
     if (this._error) {
