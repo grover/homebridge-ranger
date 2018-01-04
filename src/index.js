@@ -48,7 +48,15 @@ const RangerPlatform = class {
 
     this._createAccessories();
 
+    noble.on('stateChange', this._onNobleStateChanged.bind(this));
+
     this.api.on('didFinishLaunching', this._didFinishLaunching.bind(this));
+  }
+
+  _onNobleStateChanged(state) {
+    if (state === 'poweredOn') {
+      this._hapBrowser.start();
+    }
   }
 
   _createAccessories() {
@@ -74,7 +82,7 @@ const RangerPlatform = class {
   accessories(callback) {
     // Save the callback, we'll need it later :)
     this._accessoriesCallback = callback;
-    this._publishAccessories();
+    this._tryToPublish();
   }
 
   async _onHapAccessoryDiscovered(device) {
@@ -85,28 +93,53 @@ const RangerPlatform = class {
       return;
     }
 
-    await accessoryForDevice.assignDevice(device);
-    this._publishAccessories();
+    if (accessoryForDevice.hasPeripheral() === false) {
+      accessoryForDevice.assignPeripheral(device);
+      await this._tryToPublish();
+    }
   }
 
-  _publishAccessories() {
-    if (this._accessoriesCallback) {
-      const allFound = this._allDevicesFound();
-      if (allFound) {
-        this._accessoriesCallback(this._accessories);
-      }
-      else {
-        this.log(`Not all accessories have their devices. Not publishing yet.`);
-      }
+  async _tryToPublish() {
+    const allFound = this._allDevicesFound();
+    if (allFound) {
+      // Needed for RPi, the bluetooth stack has issues keeping connections
+      // and scanning at the same time.
+      await this._stopScanning();
+      await this._startAccessories();
+      this._publishAccessories();
+    }
+    else {
+      this.log(`Not all accessories have their devices. Not publishing yet.`);
     }
   }
 
   _allDevicesFound() {
     return this._accessories.every(accessory => {
-      if (!accessory.hasDevice()) {
+      if (!accessory.hasPeripheral()) {
         this.log(`Waiting for accessory: ${accessory.name}`);
       }
-      return accessory.hasDevice();
+
+      return accessory.hasPeripheral();
     });
+  }
+
+  async _stopScanning() {
+    this._hapBrowser.stop();
+    await new Promise((resolve) => {
+      setTimeout(resolve, 200);
+    });
+  }
+
+  async _startAccessories() {
+    for (let accessory of this._accessories) {
+      await accessory.start();
+    }
+  }
+
+  _publishAccessories() {
+    if (this._accessoriesCallback) {
+      this._accessoriesCallback(this._accessories);
+      this._accessoriesCallback = undefined;
+    }
   }
 }

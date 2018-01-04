@@ -13,27 +13,26 @@ class HapBleBrowser extends EventEmitter {
     this._isScanning = false;
     this._devices = {};
 
-    this.noble.on('stateChange', this._onNobleStateChanged.bind(this));
     this.noble.on('discover', this._onBleDeviceDiscovered.bind(this));
   }
 
-  _onNobleStateChanged(state) {
-    if (state === 'poweredOn') {
-      if (!this._isScanning) {
-        this.log('Starting to scan for BLE HomeKit accessories');
-        // Need repetetive reports for the same device to detect the GSN for
-        // disconnected events in order to update HomeKit about changes in
-        // those characteristics.
-        this.noble.startScanning([], true);
-        this._isScanning = true;
-      }
+  start() {
+    if (this._isScanning === false) {
+      this.log('Starting to scan for BLE HomeKit accessories');
+      // Need repetetive reports for the same device to detect the GSN for
+      // disconnected events in order to update HomeKit about changes in
+      // those characteristics.
+      this.noble.startScanning();
+      this._isScanning = true;
     }
-    else if (this._isScanning) {
+  }
+
+  stop() {
+    if (this._isScanning) {
+      this.log('Stopped to scan for BLE HomeKit accessories');
       this.noble.stopScanning();
       this._devices = {};
     }
-
-    this.emit(state);
   }
 
   _onBleDeviceDiscovered(peripheral) {

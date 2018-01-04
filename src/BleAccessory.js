@@ -22,36 +22,37 @@ class BleAccessory {
     this.name = config.name;
     this.config = config;
 
-    this._isReachable = true; // We did discover the device, so it must be reachable
-    this._device;
+    this._isReachable = true; // We did discover the peripheral, so it must be reachable
+    this._peripheral;
     this._services = [];
 
     this._createServices(this.api);
   }
 
-  async assignDevice(device) {
-    this._device = device;
+  assignPeripheral(peripheral) {
+    this._peripheral = peripheral;
+    this.log(`Accessory '${this.name}' found.`);
+  }
 
-    this.accessoryDatabase = await AccessoryDatabase.create(this.api, device);
-    this.hapExecutor = new HapExecutor(this.log, device, this.accessoryDatabase);
+  async start() {
+    this.accessoryDatabase = await AccessoryDatabase.create(this.api, this._peripheral);
+    this.hapExecutor = new HapExecutor(this.log, this._peripheral, this.accessoryDatabase);
     this.hapAccessor = new HapCharacteristicAccessor(this.log, this.hapExecutor);
 
     await this._ensureDeviceIsPaired();
     await this._refreshAccessoryInformation();
     this._createServiceAndCharacteristicsProxies();
 
-    this._device.on('disconnected-event', this._handleDisconnectedDeviceEvents.bind(this));
-    this._device.on('connected-event', this._handleNotification.bind(this));
-
-    this.log(`Accessory found.`);
+    this._peripheral.on('disconnected-event', this._handleDisconnectedDeviceEvents.bind(this));
+    this._peripheral.on('connected-event', this._handleNotification.bind(this));
   }
 
-  hasDevice() {
-    return this._device !== undefined;
+  hasPeripheral() {
+    return this._peripheral !== undefined;
   }
 
   async _ensureDeviceIsPaired() {
-    if (!this._device.isPaired) {
+    if (!this._peripheral.isPaired) {
       this.log(`Device is not paired yet, pairing now.`);
 
       const pairSetup = new PairSetup(this.log, this.accessoryDatabase, this.config.pin);
@@ -59,7 +60,7 @@ class BleAccessory {
         const result = await this.hapExecutor.run(pairSetup);
         this.accessoryDatabase.pairing = result;
         this.accessoryDatabase.save();
-        this._device.disconnect();
+        this._peripheral.disconnect();
         this.log(`Pairing completed.`);
       }
       catch (e) {
@@ -131,8 +132,8 @@ class BleAccessory {
   }
 
   _handleDisconnectedDeviceEvents() {
-    // Any of the characteristics exposed by the device has changed. To reflect
-    // this over IP, we have to connect to the device and read all
+    // Any of the characteristics exposed by the peripheral has changed. To reflect
+    // this over IP, we have to connect to the peripheral and read all
     // characteristics, which have an indicate bit set in order to issue a
     // change event via Homebridge.
 

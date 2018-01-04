@@ -4,14 +4,6 @@ const EventEmitter = require('events').EventEmitter;
 
 const HapExecutor = require('./HapExecutor');
 
-/**
- * Facade to the HAP BLE device.
- * 
- * Handles basic device connectivity as well as the connection timers mandated
- * by HomeKit, the pairing, the unpairing, establishing a secure session and
- * GATT DB Verification.
- * 
- */
 class HapBleDevice extends EventEmitter {
   constructor(log, peripheral, manufacturerData) {
     super();
@@ -62,37 +54,69 @@ class HapBleDevice extends EventEmitter {
 
   async connect() {
     if (this.state === 'connected') {
-      return Promise.resolve();
+      return;
     }
 
+    /**
+     * RPi noble sometimes has connectivity issues by disconnecting immediately
+     * after a connection has been established.
+     * 
+     * This loop attempts to connect three times and waits afterwards to see if
+     * a connection has been established. Gives up after three times.
+     * 
+     * See https://github.com/sandeepmistry/noble/issues/465
+     * 
+     */
+    for (let n = 0; n < 3 && this.state !== 'connected'; n++) {
+      await this._connect();
+      await this._sleep(100);
+    }
+
+    if (this.state !== 'connected') {
+      this.log(`noble failed to establish a BLE connection to ${this.name}`);
+      throw new Error(`noble failed to establish a BLE connection to ${this.name}`);
+    }
+
+    await this._discoverServicesAndCharacteristics();
+    if (this.isPaired) {
+      this._subscribeToIndicatingCharacteristics();
+    }
+  }
+
+  _connect() {
     return new Promise((resolve, reject) => {
       this._peripheral.connect((error) => {
         if (error) {
           reject(error);
         }
 
-        this._discoverServicesAndCharacteristics()
-          .then(() => {
-            if (this.isPaired) {
-              this._subscribeToIndicatingCharacteristics();
-            }
-          })
-          .then(resolve)
-          .catch(reject);
+        resolve();
       });
     });
   }
 
+  _sleep(timeout) {
+    return new Promise(resolve => {
+      setTimeout(resolve, timeout);
+    });
+  }
+
   _onConnected() {
-    this.log(`Connected to ${this.name}`);
-    this.state = 'connected';
+    if (this.state !== 'connected') {
+      this.state = 'connected';
+      this.log(`Connected to ${this.name}`);
+    }
   }
 
   async disconnect() {
     if (this.state === 'disconnected') {
-      return Promise.resolve();
+      return;
     }
 
+    await this._disconnect();
+  }
+
+  _disconnect() {
     return new Promise((resolve, reject) => {
       this._peripheral.disconnect((error) => {
         if (error) {
@@ -105,15 +129,17 @@ class HapBleDevice extends EventEmitter {
   }
 
   _onDisconnected() {
-    this.log(`Disconnected from ${this.name}`);
-    this.state = 'disconnected';
+    if (this.state !== 'disconnected') {
+      this.state = 'disconnected';
+      this.log(`Disconnected from ${this.name}`);
 
-    // Reset the discovered state
-    this.services = undefined;
-    this.characteristics = undefined;
+      // Reset the discovered state
+      this.services = undefined;
+      this.characteristics = undefined;
 
-    // Cancel pending BLE operations
-    this._rejectPendingOperations();
+      // Cancel pending BLE operations
+      this._rejectPendingOperations();
+    }
   }
 
   _discoverServicesAndCharacteristics() {
