@@ -240,7 +240,7 @@ function discoverInstanceIDDescriptor(characteristic) {
         return;
       }
 
-      const instanceIdDescriptor = descriptors.find(d => d.uuid == 'dc46f0fe81d24616b5d96abdd796939a');
+      const instanceIdDescriptor = descriptors.find(d => d.uuid === '939a' || d.uuid === 'dc46f0fe81d24616b5d96abdd796939a');
       if (!instanceIdDescriptor) {
         reject('No instance ID descriptor found');
         return;
