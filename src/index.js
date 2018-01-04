@@ -69,7 +69,7 @@ const RangerPlatform = class {
         throw new Error('Multiple accessories configured with the same MAC address.');
       }
 
-      const accessory = new BleAccessory(this.api, this.log, device);
+      const accessory = new BleAccessory(this.api, this.log, noble, device);
       this._devices[device.address] = accessory;
       return accessory;
     });

@@ -64,18 +64,9 @@ class HapExecutor {
   }
 
   async _read(c, insecure, transactionId) {
-    let payload = Buffer.alloc(0);
-    while (true) {
-      const rxPacket = await this._device.read(c);
-      if (!rxPacket || rxPacket.length === 0) {
-        break;
-      }
-
-      const decryptedPacket = this._decryptRxPacket(rxPacket, !insecure);
-      const responsePayload = this._getResponsePayload(decryptedPacket, transactionId);
-      payload = Buffer.concat([payload, responsePayload]);
-    }
-
+    const rxPacket = await this._device.read(c);
+    const decryptedPacket = this._decryptRxPacket(rxPacket, !insecure);
+    const payload = this._getResponsePayload(decryptedPacket, transactionId);
     return payload;
   }
 

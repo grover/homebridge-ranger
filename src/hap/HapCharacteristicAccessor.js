@@ -47,14 +47,6 @@ class HapCharacteristicAccessor {
       throw e;
     }
   }
-
-  async subscribeCharacteristic(hapProps) {
-    this.log(`Subscribe ${hapProps.address}`);
-  }
-
-  async unsubscribeCharacteristic(hapProps) {
-    this.log(`Unsubscribe ${hapProps.address}`);
-  }
 };
 
 module.exports = HapCharacteristicAccessor;

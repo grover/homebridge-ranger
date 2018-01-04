@@ -30,7 +30,6 @@ class HapBleDevice extends EventEmitter {
     this._pendingOperations = [];
     this._transactionId = Math.floor(Math.random() * 255);
 
-    this._peripheral.on('connect', this._onConnected.bind(this));
     this._peripheral.on('disconnect', this._onDisconnected.bind(this));
   }
 
@@ -67,20 +66,21 @@ class HapBleDevice extends EventEmitter {
      * See https://github.com/sandeepmistry/noble/issues/465
      * 
      */
-    for (let n = 0; n < 3 && this.state !== 'connected'; n++) {
+    for (let n = 0; n < 3 && this._peripheral.state !== 'connected'; n++) {
       await this._connect();
       await this._sleep(100);
     }
 
-    if (this.state !== 'connected') {
+    if (this._peripheral.state !== 'connected') {
       this.log(`noble failed to establish a BLE connection to ${this.name}`);
       throw new Error(`noble failed to establish a BLE connection to ${this.name}`);
     }
 
     await this._discoverServicesAndCharacteristics();
-    if (this.isPaired) {
-      this._subscribeToIndicatingCharacteristics();
-    }
+    this.log(`Connected to ${this.name}`);
+
+    this.state = 'connected';
+    this.emit('stateChanged', this.state);
   }
 
   _connect() {
@@ -99,13 +99,6 @@ class HapBleDevice extends EventEmitter {
     return new Promise(resolve => {
       setTimeout(resolve, timeout);
     });
-  }
-
-  _onConnected() {
-    if (this.state !== 'connected') {
-      this.state = 'connected';
-      this.log(`Connected to ${this.name}`);
-    }
   }
 
   async disconnect() {
@@ -130,15 +123,17 @@ class HapBleDevice extends EventEmitter {
 
   _onDisconnected() {
     if (this.state !== 'disconnected') {
-      this.state = 'disconnected';
       this.log(`Disconnected from ${this.name}`);
 
-      // Reset the discovered state
-      this.services = undefined;
-      this.characteristics = undefined;
+      this.state = 'disconnected';
+      this.emit('stateChanged', this.state);
 
       // Cancel pending BLE operations
       this._rejectPendingOperations();
+
+      // Reset the discovered/acquired state
+      this.services = undefined;
+      this.characteristics = undefined;
     }
   }
 
@@ -246,26 +241,30 @@ class HapBleDevice extends EventEmitter {
     }
   }
 
-  _subscribeToIndicatingCharacteristics() {
-    this.services.forEach(svc => {
-      svc.characteristics.forEach(c => {
-        if (c.properties.indexOf('indicate') != -1) {
-          c.subscribe();
+  subscribeCharacteristic(address) {
+    try {
+      const c = this.getCharacteristic(address);
+      if (c.properties.indexOf('indicate') != -1) {
+        c.subscribe();
+        this.log(`Device: Subscribed to ${address.service}:${address.characteristic}`);
+      }
+    }
+    catch (e) {
+      this.log(`Device: Failed to subscribe to  ${address.service}:${address.characteristic}`);
+    }
+  }
 
-          c.on('data', (data, isNotification) => {
-            if ((data && data.length === 0) || isNotification) {
-              const address = {
-                service: svc.uuid,
-                characteristic: c.uuid
-              };
-
-              this.log(`Connected event on service ${svc.uuid} for characteristic ${c.uuid}`);
-              this.emit('connected-event', address);
-            }
-          });
-        }
-      });
-    });
+  unsubscribeCharacteristic(address) {
+    try {
+      const c = this.getCharacteristic(address);
+      if (c.properties.indexOf('indicate') != -1) {
+        c.unsubscribe();
+        this.log(`Device: Unsubscribed from ${address.service}:${address.characteristic}`);
+      }
+    }
+    catch (e) {
+      this.log(`Device: Failed to unsubscribe to  ${address.service}:${address.characteristic}`);
+    }
   }
 };
 

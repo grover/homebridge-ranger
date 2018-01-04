@@ -8,13 +8,14 @@ module.exports = {
     const Characteristic = hap.Characteristic;
 
     class ProxyCharacteristic {
-      constructor(log, accessor, hapProps) {
+      constructor(log, accessor, hapProps, subscriptionManager) {
         Characteristic.call(this, '', hapProps.characteristic);
 
         this.log = log;
 
         this._accessor = accessor;
         this._hapProps = hapProps;
+        this._subscriptionManager = subscriptionManager;
 
         const props = {
           format: hapProps.format,
@@ -69,11 +70,11 @@ module.exports = {
       }
 
       _subscribeCharacteristic() {
-        this._accessor.subscribeCharacteristic(this._hapProps);
+        this._subscriptionManager.subscribe(this._hapProps.address);
       }
 
       _unsubscribeCharacteristic() {
-        this._accessor.unsubscribeCharacteristic(this._hapProps);
+        this._subscriptionManager.unsubscribe(this._hapProps.address);
       };
 
       notificationPending() {

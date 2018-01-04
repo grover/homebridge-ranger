@@ -5,6 +5,7 @@ const AccessoryDatabase = require('./hap/AccessoryDatabase');
 
 const HapExecutor = require('./hap/HapExecutor');
 const HapCharacteristicAccessor = require('./hap/HapCharacteristicAccessor');
+const HapSubscriptionManager = require('./hap/HapSubscriptionManager');
 
 const PairSetup = require('./hap/pairing/PairSetup');
 
@@ -12,7 +13,7 @@ let Characteristic, Service;
 
 class BleAccessory {
 
-  constructor(api, log, config) {
+  constructor(api, log, noble, config) {
     this.api = api;
 
     Characteristic = this.api.hap.Characteristic;
@@ -23,6 +24,7 @@ class BleAccessory {
     this.config = config;
 
     this._isReachable = true; // We did discover the peripheral, so it must be reachable
+    this._noble = noble;
     this._peripheral;
     this._services = [];
 
@@ -38,13 +40,12 @@ class BleAccessory {
     this.accessoryDatabase = await AccessoryDatabase.create(this.api, this._peripheral);
     this.hapExecutor = new HapExecutor(this.log, this._peripheral, this.accessoryDatabase);
     this.hapAccessor = new HapCharacteristicAccessor(this.log, this.hapExecutor);
+    this.subscriptionManager = new HapSubscriptionManager(
+      this.log, this._noble, this, this.accessoryDatabase, this._peripheral);
 
     await this._ensureDeviceIsPaired();
     await this._refreshAccessoryInformation();
     this._createServiceAndCharacteristicsProxies();
-
-    this._peripheral.on('disconnected-event', this._handleDisconnectedDeviceEvents.bind(this));
-    this._peripheral.on('connected-event', this._handleNotification.bind(this));
   }
 
   hasPeripheral() {
@@ -125,38 +126,13 @@ class BleAccessory {
       .filter(svc => !blacklist.includes(svc.UUID))
       .map(service => {
         this.log(`Publishing BLE service ${service.UUID} via proxy`);
-        return new Service.ProxyService(this.api, this.log, this.hapAccessor, service);
+        return new Service.ProxyService(this.api, this.log, this.hapAccessor, this.subscriptionManager, service);
       });
 
     this._services = this._services.concat(services);
   }
 
-  _handleDisconnectedDeviceEvents() {
-    // Any of the characteristics exposed by the peripheral has changed. To reflect
-    // this over IP, we have to connect to the peripheral and read all
-    // characteristics, which have an indicate bit set in order to issue a
-    // change event via Homebridge.
-
-    this.accessoryDatabase.services.forEach(svc => {
-      svc.characteristics.forEach(c => {
-        if (c.ev) {
-          // Potential candidate for a disconnected notification
-          this._handleNotification(c.address);
-        }
-      });
-    });
-  }
-
-  _handleNotification(address) {
-    // We know the specific characteristic that caused the change. Query it
-    // directly.
-    const characteristic = this._getCharacteristic(address);
-    if (characteristic) {
-      characteristic.notificationPending();
-    }
-  }
-
-  _getCharacteristic(address) {
+  getCharacteristic(address) {
     const service = this._services.find(svc => svc.address === address.service);
     if (service) {
       const characteristic = service.characteristics.find(c => c.address === address.characteristic);

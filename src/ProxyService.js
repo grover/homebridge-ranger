@@ -8,7 +8,7 @@ module.exports = {
     const Service = hap.Service;
 
 
-    Service.ProxyService = function (api, log, accessor, service) {
+    Service.ProxyService = function (api, log, accessor, subscriptionManager, service) {
 
       Service.call(this, '', service.UUID);
 
@@ -19,7 +19,8 @@ module.exports = {
       service.characteristics
         .filter(c => !c.isHidden)
         .forEach(characteristic => {
-          const c = new api.hap.Characteristic.ProxyCharacteristic(this.log, accessor, characteristic);
+          const c = new api.hap.Characteristic.ProxyCharacteristic(
+            this.log, accessor, characteristic, subscriptionManager);
           this.addCharacteristic(c);
         });
 
