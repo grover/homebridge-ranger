@@ -38,7 +38,7 @@ class HapSubscriptionManager {
     // have an indicate bit set in order to issue a change event via Homebridge.
     this.accessoryDatabase.services.forEach(svc => {
       svc.characteristics.forEach(c => {
-        if (c.ev) {
+        if (this._supportsDisconnectedEvents(c)) {
           // Potential candidate for a disconnected notification
           this._handleNotification(c.address);
         }
@@ -59,11 +59,7 @@ class HapSubscriptionManager {
   subscribe(address) {
     this.log(`Subscribe ${address.service}:${address.characteristic}`);
 
-    const supportsOnlyConnectedEvents = this._supportsOnlyConnectedEvents(address);
-    // TODO: Trigger a keep alive and a connect on the HapExecutor
-    this._forceKeepAlives |= supportsOnlyConnectedEvents;
     this._activeSubscriptions.push(address);
-
     this._enableSubscription(address);
   }
 
@@ -74,18 +70,7 @@ class HapSubscriptionManager {
       this._activeSubscriptions.splice(subscription, 1);
     }
 
-    if (this._activeSubscriptions.length === 0) {
-      // TODO: Reset HapExecutor to enable closing connections
-      this._forceKeepAlives = false;
-    }
-
     this._disableSubscription(address);
-  }
-
-  _supportsOnlyConnectedEvents(address) {
-    const characteristic = this.accessoryDatabase.getCharacteristic(address);
-    return ((characteristic.hapCharacteristicProperties & 0x100) === 0x0
-      && (characteristic.hapCharacteristicProperties & 0x80) === 0x80);
   }
 
   _disableSubscription(address) {
@@ -98,6 +83,12 @@ class HapSubscriptionManager {
     this.log('Enable all subscriptions on the device.');
     this._activeSubscriptions.forEach(address => {
       this._enableSubscription(address);
+
+      // Trigger immediate notification to update state
+      const supportsOnlyConnectedEvents = this._supportsOnlyConnectedEvents(address);
+      if (supportsOnlyConnectedEvents) {
+        this._handleNotification(address);
+      }
     });
   }
 
@@ -105,6 +96,20 @@ class HapSubscriptionManager {
     if (this.device.state === 'connected') {
       this.device.subscribeCharacteristic(address);
     }
+  }
+
+  _supportsOnlyConnectedEvents(address) {
+    const characteristic = this.accessoryDatabase.getCharacteristic(address);
+    return !this._supportsDisconnectedEvents(characteristic)
+      && this._supportsConnectedEvents(characteristic);
+  }
+
+  _supportsDisconnectedEvents(c) {
+    return ((c.hapCharacteristicProperties & 0x100) === 0x100);
+  }
+
+  _supportsConnectedEvents(c) {
+    return ((c.hapCharacteristicProperties & 0x80) === 0x80);
   }
 
   _handlePotentialNotification(peripheralUuid, serviceUuid, characteristicUuid, data, isNotification) {
