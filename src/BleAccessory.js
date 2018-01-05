@@ -105,19 +105,40 @@ class BleAccessory {
     if (!this._peripheral.isPaired) {
       this.log(`Device is not paired yet, pairing now.`);
 
-      const pairSetup = new PairSetup(this.log, this.accessoryDatabase, this.config.pin);
-      try {
-        const result = await this.hapExecutor.run(pairSetup);
-        this.accessoryDatabase.pairing = result;
-        this.accessoryDatabase.save();
-        this._peripheral.disconnect();
+      let attempt = 1;
+      let paired = this._peripheral.isPaired;
+
+      for (let attempt = 1; paired === false && attempt < 4; attempt++) {
+        paired = await this._pairDevice();
+        if (!paired) {
+          this.log(`Failed pairing attempt #${attempt}, waiting 1s and trying again.`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+
+      if (paired == false) {
+        this.log(`Failed to pair with device ${this.name} after third attempt. Halting.`);
+      }
+      else {
         this.log(`Pairing completed.`);
       }
-      catch (e) {
-        this.log(`Pairing failed: ${JSON.stringify(e)}`, e);
-        throw e;
-      }
     }
+  }
+
+  async _pairDevice() {
+    const pairSetup = new PairSetup(this.log, this.accessoryDatabase, this.config.pin);
+    try {
+      const result = await this.hapExecutor.run(pairSetup);
+      this.accessoryDatabase.pairing = result;
+      this.accessoryDatabase.save();
+      this._peripheral.disconnect();
+    }
+    catch (e) {
+      this.log(`Pairing failed: ${JSON.stringify(e)}`, e);
+      return false;
+    }
+
+    return true;
   }
 
   async _refreshAccessoryInformation() {
