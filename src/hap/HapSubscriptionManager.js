@@ -40,7 +40,10 @@ class HapSubscriptionManager {
     // We know the specific characteristic that caused the change. Query it directly.
     const characteristic = this.accessory.getCharacteristic(address);
     if (characteristic) {
-      characteristic.notificationPending();
+      /**
+       * Refreshing the cached value causes the event to be sent too.
+       */
+      characteristic.refreshCachedValue();
     }
   }
 

@@ -77,10 +77,9 @@ module.exports = {
         this._subscriptionManager.unsubscribe(this._hapProps.address);
       };
 
-      notificationPending() {
+      refreshCachedValue() {
         this._accessor.readCharacteristic(this._hapProps)
           .then(value => {
-            this.log(`Issueing HomeKit notification for characteristic ${this.UUID} with changed value ${value}`);
             this.updateValue(value);
           })
           .catch(reason => {

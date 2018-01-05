@@ -11,6 +11,14 @@ const PairSetup = require('./hap/pairing/PairSetup');
 
 let Characteristic, Service;
 
+const ServiceBlacklist = [
+  '0000003E-0000-1000-8000-0026BB765291', // Accessory Information
+  '00000062-0000-1000-8000-0026BB765291', // BridgingState Service
+  '00000055-0000-1000-8000-0026BB765291', // HAP-BLE Pairing Service
+  '000000A2-0000-1000-8000-0026BB765291', // HAP-BLE Protocol Information Service
+];
+
+
 class BleAccessory {
 
   constructor(api, log, noble, config) {
@@ -45,7 +53,8 @@ class BleAccessory {
 
     await this._ensureDeviceIsPaired();
     await this._refreshAccessoryInformation();
-    this._createServiceAndCharacteristicsProxies();
+    await this._createServiceAndCharacteristicsProxies();
+    await this._refreshAllCharacteristics();
   }
 
   hasPeripheral() {
@@ -115,15 +124,25 @@ class BleAccessory {
     };
   }
 
-  _createServiceAndCharacteristicsProxies() {
-    const blacklist = [
-      Service.AccessoryInformation.UUID,
-      '00000055-0000-1000-8000-0026BB765291', // HAP-BLE Pairing Service
-      '000000A2-0000-1000-8000-0026BB765291', // HAP-BLE Protocol Information Service
-    ];
+  /**
+   * This updates the Charactistic.value to match the actual values on the devices.
+   */
+  async _refreshAllCharacteristics() {
+    this._services
+      .filter(svc => ServiceBlacklist.indexOf(svc.UUID) === -1)
+      .forEach(svc => {
+        svc.characteristics
+          .filter(c => c instanceof Characteristic.ProxyCharacteristic && c.props.format !== 'data' && c.props.format !== 'tlv8')
+          .forEach(c => {
+            c.refreshCachedValue();
+          });
+      });
+  }
 
+  _createServiceAndCharacteristicsProxies() {
     const services = this.accessoryDatabase.services
-      .filter(svc => !blacklist.includes(svc.UUID))
+      .filter(svc => !ServiceBlacklist
+        .includes(svc.UUID))
       .map(service => {
         this.log(`Publishing BLE service ${service.UUID} via proxy`);
         return new Service.ProxyService(this.api, this.log, this.hapAccessor, this.subscriptionManager, service);
