@@ -22,11 +22,11 @@ class HapCharacteristicAccessor {
       const result = await this._executor.run(request);
       const payload = result[TlvKeys.Value];
       const value = FormatDecoders.decode(hapProps.format, payload, 0, payload.length);
-      this.log(`Value of characteristic ${hapProps.characteristic} is ${value}`);
+      this.log(`Value of ${hapProps.address.service}:${hapProps.address.characteristic} is ${value}`);
       return value;
     }
     catch (e) {
-      this.log(`Failed to read characteristic ${hapProps.characteristic}. Reason: ${e}`, reason);
+      this.log(`Failed to read ${hapProps.address.service}:${hapProps.address.characteristic}. Reason: ${e}`, reason);
       throw e;
     }
   }
@@ -40,10 +40,10 @@ class HapCharacteristicAccessor {
     const request = new WriteRequest(hapProps.address, hapProps.cid, payload);
     try {
       const result = await this._executor.run(request);
-      this.log(`Successfully wrote characteristic ${hapProps.characteristic}`);
+      this.log(`Successfully wrote ${hapProps.address.service}:${hapProps.address.characteristic}`);
     }
     catch (e) {
-      this.log(`Failed to write characteristic ${hapProps.characteristic}. Reason: ${reason}`, reason);
+      this.log(`Failed to write ${hapProps.address.service}:${hapProps.address.characteristic}. Reason: ${reason}`, reason);
       throw e;
     }
   }

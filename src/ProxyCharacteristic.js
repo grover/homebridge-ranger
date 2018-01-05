@@ -46,7 +46,7 @@ module.exports = {
       }
 
       _setCharacteristicValue(value, callback) {
-        this.log(`Setting characteristic ${this.UUID} to ${value}`);
+        this.log(`Writing ${value} to ${this._hapProps.address.service}:${this._hapProps.address.characteristic}`);
 
         this._accessor.writeCharacteristic(this._hapProps, value)
           .then(() => {
@@ -58,7 +58,7 @@ module.exports = {
       }
 
       _getCharacteristicValue(callback) {
-        this.log(`Returning characteristic ${this.UUID}`);
+        this.log(`Reading ${this._hapProps.address.service}:${this._hapProps.address.characteristic}`);
 
         this._accessor.readCharacteristic(this._hapProps)
           .then(value => {
@@ -83,7 +83,7 @@ module.exports = {
             this.updateValue(value);
           })
           .catch(reason => {
-            this.log(`Failed to update characteristic ${this.UUID} in response to notification.`);
+            this.log(`Failed to refresh characteristic ${this._hapProps.address.service}:${this._hapProps.address.characteristic}`);
           });
       }
     };
