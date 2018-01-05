@@ -102,9 +102,6 @@ const RangerPlatform = class {
   async _tryToPublish() {
     const allFound = this._allDevicesFound();
     if (allFound) {
-      // Needed for RPi, the bluetooth stack has issues keeping connections
-      // and scanning at the same time.
-      await this._stopScanning();
       await this._startAccessories();
       this._publishAccessories();
     }

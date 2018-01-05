@@ -14,17 +14,22 @@ class HapBleBrowser extends EventEmitter {
     this._devices = {};
 
     this.noble.on('discover', this._onBleDeviceDiscovered.bind(this));
+    this.noble.on('scanStop', this._onScanStopped.bind(this));
   }
 
   start() {
     if (this._isScanning === false) {
       this.log('Starting to scan for BLE HomeKit accessories');
-      // Need repetetive reports for the same device to detect the GSN for
-      // disconnected events in order to update HomeKit about changes in
-      // those characteristics.
-      this.noble.startScanning();
+      this._scan();
       this._isScanning = true;
     }
+  }
+
+  _scan() {
+    // Need repetetive reports for the same device to detect the GSN for
+    // disconnected events in order to update HomeKit about changes in
+    // those characteristics.
+    this.noble.startScanning([], true);
   }
 
   stop() {
@@ -97,6 +102,17 @@ class HapBleBrowser extends EventEmitter {
     }
 
     this.emit('discovered', device);
+  }
+
+  _onScanStopped() {
+    /**
+     * RPi Zero W stops scanning once a connection has been established. We make sure that
+     * we keep scanning here to receive disconnected events in the future.
+     */
+    if (this._isScanning) {
+      this.log('Scanning stopped externally. Restarting.');
+      this._scan();
+    }
   }
 };
 

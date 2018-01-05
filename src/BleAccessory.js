@@ -41,7 +41,7 @@ class BleAccessory {
     this.hapExecutor = new HapExecutor(this.log, this._peripheral, this.accessoryDatabase);
     this.hapAccessor = new HapCharacteristicAccessor(this.log, this.hapExecutor);
     this.subscriptionManager = new HapSubscriptionManager(
-      this.log, this._noble, this, this.accessoryDatabase, this._peripheral);
+      this.log, this._noble, this, this.accessoryDatabase, this._peripheral, this.hapExecutor);
 
     await this._ensureDeviceIsPaired();
     await this._refreshAccessoryInformation();
