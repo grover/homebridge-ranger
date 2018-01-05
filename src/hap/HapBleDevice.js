@@ -209,10 +209,10 @@ class HapBleDevice extends EventEmitter {
 
   updateManufacturerData(data) {
     this.isPaired = data.isPaired;
-    this.manufacturerData = data;
 
     this._checkForDisconnectedEvents(data);
 
+    this.manufacturerData = data;    
     this.emit('manufacturerData', data);
   }
 

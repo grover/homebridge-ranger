@@ -21,21 +21,32 @@ class HapSubscriptionManager {
   }
 
   _handleDisconnectedDeviceEvents() {
+    let oneSubscriber = false;
+
     // At least one of the characteristics exposed by the peripheral has changed. To reflect
     // this over IP, we have to connect to the peripheral and read all characteristics, which
     // have an indicate bit set in order to issue a change event via Homebridge.
     this.accessoryDatabase.services.forEach(svc => {
       svc.characteristics.forEach(c => {
-        if (this._supportsDisconnectedEvents(c) && this._isSubscribed(c.address)) {
+        const supportsDisconnectedEvents = this._supportsDisconnectedEvents(c);
+        const hasSubscriber = this._isSubscribed(c.address);
+
+        oneSubscriber |= (hasSubscriber & supportsDisconnectedEvents);
+
+        if (supportsDisconnectedEvents && hasSubscriber) {
           // Potential candidate for a disconnected notification
           this._handleNotification(c.address);
         }
       });
     });
+
+    if (!oneSubscriber) {
+      this.log('No subscriber for events.');
+    }
   }
 
   _isSubscribed(address) {
-    this._activeSubscriptions.indexOf(address) !== -1;
+    return this._activeSubscriptions.indexOf(address) !== -1;
   }
 
   _handleNotification(address) {
