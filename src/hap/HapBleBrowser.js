@@ -72,19 +72,10 @@ class HapBleBrowser extends EventEmitter {
 
   _updateDevice(peripheral, data) {
     let device = this._devices[peripheral.id];
-    if (device && device.ignore == false) {
+    if (device && device.ignore === false) {
       // Update manufacturerData to enable disconnected notifications
       device.updateManufacturerData(data);
-
-      if (device.rssi != peripheral.rssi) {
-        const diff = Math.abs(device.rssi - peripheral.rssi);
-
-        // Ignore 1dB changes
-        if (diff > 1) {
-          device.rssi = peripheral.rssi;
-          this.log(`${device.name}: rrsi=${device.rssi}dB`);
-        }
-      }
+      device.updateRSSI(peripheral.rssi);
     }
 
     return device !== undefined;

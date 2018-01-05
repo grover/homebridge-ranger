@@ -53,11 +53,14 @@ The above configuration will add a single BLE accessory to the plugin. You can p
 
 ### Configuration options
 
-| Field | Type | Description |
-|---|---|---|
-| name | String | Required field, which specifies the name of the accessory as seen in HomeKit. |
-| address | String | The MAC address of the accessory. With colons and all lower case. Best use the MAC address printed in the log, when the device is discovered. |
-| pin | String | The 9 digit pin of the accessory with the dashes.
+| Field | Type | Required | Description |
+|---|---|---|---|
+| name | String | Yes | Required field, which specifies the name of the accessory as seen in HomeKit. |
+| address | String | Yes | The MAC address of the accessory. With colons and all lower case. Best use the MAC address printed in the log, when the device is discovered. |
+| pin | String | Yes | The 9 digit pin of the accessory with the dashes.
+| reachability | bool | No | Default is true. Updates the device reachability characteristic. |
+| reachabilityTimeout | Number | No | Default is 30s. Determines the number of milliseconds that need to expire without advertisements before a device is considered unreachable. |
+| rssi | bool | No | Default is false. Log RSSI updates for the device to the homebridge log. |
 
 ## Pairing
 

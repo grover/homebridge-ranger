@@ -12,7 +12,6 @@ class HapBleDevice extends EventEmitter {
 
     this._peripheral = peripheral;
     this.manufacturerData = manufacturerData;
-    this._isAuthenticated = false;
 
     this.uuid = peripheral.uuid;
     this.address = peripheral.address;
@@ -209,10 +208,24 @@ class HapBleDevice extends EventEmitter {
   }
 
   updateManufacturerData(data) {
-    const hasGSNChanged = data.gsn != this.manufacturerData.gsn;
-    this.manufacturerData = data;
     this.isPaired = data.isPaired;
+    this.manufacturerData = data;
 
+    this._checkForDisconnectedEvents(data);
+
+    this.emit('manufacturerData', data);
+  }
+
+  updateRSSI(rssi) {
+    if (this.rssi != rssi) {
+      const diff = Math.abs(this.rssi - rssi);
+      this.rssi = rssi;
+      this.emit('rssi', this.rssi, diff);
+    }
+  }
+
+  _checkForDisconnectedEvents(data) {
+    const hasGSNChanged = data.gsn != this.manufacturerData.gsn;
     if (hasGSNChanged) {
       this.log(`Device ${this.name} issued a disconnected event.`);
       this.emit('disconnected-event');

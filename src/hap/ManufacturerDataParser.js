@@ -10,18 +10,33 @@ const HAPBLEAdvertisingIntervals = [
   { min: 2500, max: Number.POSITIVE_INFINITY }
 ];
 
+function notHap() {
+  return {
+    isHAP: false
+  };
+}
+
 module.exports = function (buffer) {
   if (buffer.length < 17) {
-    return {
-      isHAP: false
-    };
+    return notHap();
   }
+
+  const coid = buffer.readUInt16LE(0);
+  const ty = buffer.readUInt8(2);
+  const ail = buffer.readUInt8(3);
+
+  if ((ail & 0x1F) < 0x0D) {
+    return notHap();
+  }
+
+  const advIndex = (ail >> 5);
+  const advInterval = HAPBLEAdvertisingIntervals[advIndex];
 
   // 6.4.2.2
   const data = {
-    coid: buffer.readUInt16LE(0),
-    ty: buffer.readUInt8(2),
-    advertisingInterval: buffer.readUInt8(3),
+    coid: coid,
+    ty: ty,
+    advertisingInterval: advInterval,
     sf: buffer.readUInt8(4),
     deviceid: buffer.slice(5, 11),
     acid: buffer.readUInt16LE(11),
@@ -34,8 +49,6 @@ module.exports = function (buffer) {
     // HAP Simulator on Mac is 0x11 - && ((data.advertisingInterval & 0x1F) === 0x0D)
     && data.ty === 0x06
     && data.cv === 0x02;
-
-  data.advertisingInterval = HAPBLEAdvertisingIntervals[data.AdvertisingInterval >> 5];
 
   data.isPaired = ((data.sf & 0x01) === 0x00);
 

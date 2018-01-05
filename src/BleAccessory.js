@@ -6,6 +6,7 @@ const AccessoryDatabase = require('./hap/AccessoryDatabase');
 const HapExecutor = require('./hap/HapExecutor');
 const HapCharacteristicAccessor = require('./hap/HapCharacteristicAccessor');
 const HapSubscriptionManager = require('./hap/HapSubscriptionManager');
+const DeviceWatcher = require('./hap/DeviceWatcher');
 
 const PairSetup = require('./hap/pairing/PairSetup');
 
@@ -29,19 +30,57 @@ class BleAccessory {
 
     this.log = log;
     this.name = config.name;
-    this.config = config;
 
-    this._isReachable = true; // We did discover the peripheral, so it must be reachable
+    this.config = config;
+    if (this.config.reachability === undefined) {
+      this.config.reachability = true;
+    }
+    if (this.config.reachabilityTimeout === undefined) {
+      this.config.reachabilityTimeout = 30000;
+    }
+    if (this.config.rssi === undefined) {
+      this.config.rssi = false;
+    }
+
+    this._isReachable = false;
     this._noble = noble;
     this._peripheral;
     this._services = [];
+    this._started = false;
 
     this._createServices(this.api);
   }
 
   assignPeripheral(peripheral) {
+
     this._peripheral = peripheral;
+    if (this.config.rssi) {
+      this._peripheral.on('rssi', this._rssiChanged.bind(this));
+    }
+
+    if (this.config.reachability) {
+      this._watcher = new DeviceWatcher(this.log, this.name, this.config.reachabilityTimeout);
+      this._watcher.on('visible', this._setReachable.bind(this));
+      this._peripheral.on('manufacturerData', this._updateWatcher.bind(this));
+      this._updateWatcher(peripheral.manufacturerData);
+    }
+    else {
+      // Simulate reachability if not requested
+      this._setReachable(true);
+    }
+
     this.log(`Accessory '${this.name}' found.`);
+  }
+
+  _updateWatcher(data) {
+    this._watcher.seen();
+  }
+
+  _rssiChanged(rssi, diff) {
+    // Ignore 1dB changes
+    if (diff > 1) {
+      this.log(`${this.name}: rrsi=${this._peripheral.rssi}dB`);
+    }
   }
 
   async start() {
@@ -55,6 +94,7 @@ class BleAccessory {
     await this._refreshAccessoryInformation();
     await this._createServiceAndCharacteristicsProxies();
     await this._refreshAllCharacteristics();
+    this._started = true;
   }
 
   hasPeripheral() {
@@ -132,11 +172,17 @@ class BleAccessory {
       .filter(svc => ServiceBlacklist.indexOf(svc.UUID) === -1)
       .forEach(svc => {
         svc.characteristics
-          .filter(c => c instanceof Characteristic.ProxyCharacteristic && c.props.format !== 'data' && c.props.format !== 'tlv8')
+          .filter(c => this._isRefreshableCharacteristic(c))
           .forEach(c => {
             c.refreshCachedValue();
           });
       });
+  }
+
+  _isRefreshableCharacteristic(c) {
+    return c instanceof Characteristic.ProxyCharacteristic
+      && c.props.format !== 'data'
+      && c.props.format !== 'tlv8';
   }
 
   _createServiceAndCharacteristicsProxies() {
@@ -226,6 +272,7 @@ class BleAccessory {
   }
 
   _setReachable(state) {
+    this.log(`Reported reachability for ${this.name}: ${state}`);
     if (this._isReachable === state) {
       return;
     }
@@ -234,6 +281,12 @@ class BleAccessory {
 
     this._bridgingService.getCharacteristic(Characteristic.Reachable)
       .updateValue(this._isReachable);
+
+    if (this._started && this._isReachable) {
+      // In case the device has been gone, we should refresh 
+      // the cached state
+      this._refreshAllCharacteristics();
+    }
   }
 }
 
