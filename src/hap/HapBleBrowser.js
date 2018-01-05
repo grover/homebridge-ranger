@@ -98,11 +98,19 @@ class HapBleBrowser extends EventEmitter {
   _onScanStopped() {
     /**
      * RPi Zero W stops scanning once a connection has been established. We make sure that
-     * we keep scanning here to receive disconnected events in the future.
+     * we keep scanning here to receive disconnected events in the future. Additionally
+     * we can't aggressively restart scanning as that interferes with the establishment of
+     * accessory connections. Since they're of higher importance than "disconnected events",
+     * as the connection is established to influence something, we hold of for 2s.
      */
+    const DelayScanRestart = 2000;
     if (this._isScanning) {
-      this.log('Scanning stopped externally. Restarting.');
-      this._scan();
+      this.log(`Scanning stopped externally. Restarting in ${DelayScanRestart / 1000}s.`);
+      setTimeout(() => {
+        if (this._isScanning) {
+          this._scan();
+        }
+      }, DelayScanRestart);
     }
   }
 };
