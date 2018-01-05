@@ -56,6 +56,9 @@ class BleAccessory {
     this._peripheral = peripheral;
     this._peripheral.on('rssi', this._rssiChanged.bind(this));
 
+    // Override the BLE announced names for logging purposes
+    this._peripheral.name = this.name;
+
     if (this.config.reachability) {
       this._watcher = new DeviceWatcher(this.log, this.name, this.config.reachabilityTimeout);
       this._watcher.on('visible', this._setReachable.bind(this));
