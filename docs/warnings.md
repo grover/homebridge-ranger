@@ -44,4 +44,9 @@ Also the plugin will postpone the start of homebridge until it's connected to al
 
 I'd strongly encourage you to run this on a dedicated Raspberry Pi Zero W and not share the Homebridge instance with other plugins. You could always run multiple homebridge instances on the same system and they'll not affect each other.
 
+### Retain the the attribute database
+
+This plugin writes an [attribute database](pairing/attribute-database.md), periodically, which contains data about the provided services and the pairing keys to your accessory. If those get lost for one reason or the other you'll have to manually reset the accessory to
+factory settings to pair it again.
+
 Continue to [Requirements](requirements.md)

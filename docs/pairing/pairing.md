@@ -15,7 +15,7 @@ After you've added the plugin to your homebridge (see the [installation instruct
 [Ranger] Found paired accessory Eve address=xx:xx:xx:xx:xx:xx rssi=-69dB
 ```
 
-The line gives you a couple of items of knowledge:
+The lines give you the information you need to pair your accessories:
 
 - The name of the accessory (as it announces itself.)
 - The bluetooth hardware address of the accessory
@@ -26,6 +26,9 @@ Unpaired accessories will show in yellow color and be reported as such.
 ## Choosing the accessory
 
 Make sure that the accessory you want to pair reports as unpaired. The plugin will not pair with accessories that are already paired to a different controller.
+
+> Some devices create new hardware addresses when paired/unpaired. Check that your addresses still match if you unpaired
+> recently.
 
 ## Configuring the plugin
 
@@ -83,12 +86,6 @@ Simply configuring the plugin properly will initiate a pairing process, which ca
 [Ranger] Pairing completed.
 ```
 
-Should yours deviate from the above or signal an error, please try again. Please put your device close to the accessory while pairing. If all fails, please file an [issue](https://github.com/grover/homebridge-ranger/issues).
+Should pairing fail on first attempt, the plugin will attempt to repeat the process up to three times. If all attempts fail, the plugin will stop trying and will not publish any of the accessories. Please put your device close to the accessory while pairing. If all fails, please file an [issue](https://github.com/grover/homebridge-ranger/issues).
 
-### Attribute database
-
-As part of the pairing process a file will be written in your homebridge configuration folder in ```ranger/```, which starts with the device MAC address.
-
-That file contains the attribute database for the accessory as well as the pairing keys. Make sure to backup this file and keep it safe as it contains the pairing keys and the full database of services and characteristics exposed by the accessory.
-
-This file will be written everytime something in the pairing changes or the device advertises a configuration change.
+Continue to the [attribute database](attribute-database.md).
