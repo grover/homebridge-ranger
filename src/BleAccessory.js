@@ -54,9 +54,7 @@ class BleAccessory {
   assignPeripheral(peripheral) {
 
     this._peripheral = peripheral;
-    if (this.config.rssi) {
-      this._peripheral.on('rssi', this._rssiChanged.bind(this));
-    }
+    this._peripheral.on('rssi', this._rssiChanged.bind(this));
 
     if (this.config.reachability) {
       this._watcher = new DeviceWatcher(this.log, this.name, this.config.reachabilityTimeout);
@@ -79,8 +77,32 @@ class BleAccessory {
   _rssiChanged(rssi, diff) {
     // Ignore 1dB changes
     if (diff > 1) {
-      this.log(`${this.name}: rrsi=${this._peripheral.rssi}dB`);
+      if (this.config.rssi) {
+        this.log(`${this.name}: rrsi=${this._peripheral.rssi}dB`);
+      }
     }
+
+    this._updateLinkQuality(rssi);
+  }
+
+  _updateLinkQuality(rssi) {
+    const linkQuality = this._getLinkQuality(rssi);
+    this._bridgingService.getCharacteristic(Characteristic.LinkQuality)
+      .updateValue(linkQuality);
+  }
+
+  _getLinkQuality(rssi) {
+    if (rssi < -60) {
+      return 4;
+    }
+    else if (rssi < -70) {
+      return 3;
+    }
+    else if (rssi < -80) {
+      return 2;
+    }
+
+    return 1;
   }
 
   async start() {
