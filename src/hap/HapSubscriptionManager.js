@@ -2,7 +2,7 @@
 
 class HapSubscriptionManager {
 
-  constructor(log, noble, accessory, accessoryDatabase, device) {
+  constructor(log, noble, accessory, accessoryDatabase, device, executor) {
     this.log = log;
     this.noble = noble;
     this.accessory = accessory;
@@ -11,25 +11,13 @@ class HapSubscriptionManager {
 
     this._activeSubscriptions = [];
 
-    /**
-     * There's no need to keep the device connection alive if the device supports disconnected 
-     * events and all _activeSubscriptions support disconnected events. Once enabled, will
-     * only be disabled after the last unsubscribe.
-     */
-    this._forceKeepAlives = false;
-
-    this.device.on('stateChanged', this._onDeviceStateChanged.bind(this));
-
-    // F*CK/TODO: Needs scanning to work while connected
+    executor.on('secureSessionEstablished', this._onSecureSessionEstablished.bind(this));
     this.device.on('disconnected-event', this._handleDisconnectedDeviceEvents.bind(this));
-
     this.noble._bindings.on('read', this._handlePotentialNotification.bind(this));
   }
 
-  _onDeviceStateChanged(state) {
-    if (state === 'connected') {
-      this._enableAllSubscriptions();
-    }
+  _onSecureSessionEstablished(state) {
+    this._enableAllSubscriptions();
   }
 
   _handleDisconnectedDeviceEvents() {

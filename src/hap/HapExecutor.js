@@ -1,6 +1,7 @@
 "use strict";
 
 const SequentialTaskQueue = require('sequential-task-queue').SequentialTaskQueue;
+const EventEmitter = require('events').EventEmitter;
 
 const TLV8Encoder = require('./Tlv8Encoder');
 const TLV8Decoder = require('./Tlv8Decoder');
@@ -8,9 +9,11 @@ const PairVerify = require('./pairing/PairVerify');
 
 const HapBleSessionCrypto = require('./HapBleSessionCrypto');
 
-class HapExecutor {
+class HapExecutor extends EventEmitter {
 
   constructor(log, device, accessoryDatabase) {
+    super();
+
     this.log = log;
 
     this._accessoryDatabase = accessoryDatabase;
@@ -136,8 +139,10 @@ class HapExecutor {
 
   async _establishSecureConnection() {
     let isConnected = false;
+    let newConnection = false;
+
     for (let i = 0; i < 2 && !isConnected; i++) {
-      await this._connectToBleDevice();
+      newConnection = await this._connectToBleDevice();
       isConnected = await this._establishSessionSecurity();
     }
 
@@ -145,16 +150,26 @@ class HapExecutor {
       throw new Error('Failed to establish connection to the device');
     }
 
+    if (newConnection) {
+      // Only signal first time establishment of new secure connections
+      this.emit('secureSessionEstablished');
+    }
+
     return isConnected;
   }
 
   async _connectToBleDevice() {
+    let newConnection = false;
+
     if (this._device.state !== 'connected') {
       this.log(`Connecting to ${this._device.name}`);
       this._sessionCrypto.reset();
       await this._device.connect();
+      newConnection = true;
       this.log(`Connected to ${this._device.name}`);
     }
+
+    return newConnection;
   }
 
   async _establishSessionSecurity() {
