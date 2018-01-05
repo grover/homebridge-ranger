@@ -26,12 +26,16 @@ class HapSubscriptionManager {
     // have an indicate bit set in order to issue a change event via Homebridge.
     this.accessoryDatabase.services.forEach(svc => {
       svc.characteristics.forEach(c => {
-        if (this._supportsDisconnectedEvents(c)) {
+        if (this._supportsDisconnectedEvents(c) && this._isSubscribed(c.address)) {
           // Potential candidate for a disconnected notification
           this._handleNotification(c.address);
         }
       });
     });
+  }
+
+  _isSubscribed(address) {
+    this._activeSubscriptions.indexOf(address) !== -1;
   }
 
   _handleNotification(address) {
