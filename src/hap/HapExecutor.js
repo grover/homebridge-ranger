@@ -51,26 +51,31 @@ class HapExecutor extends EventEmitter {
         throw new Error('Tx packet fragmentation not implemented.');
       }
 
-      const packet = this._buildPacket(request.opcode, transactionId, request.cid, payload);
-      const encryptedPacket = this._encryptTxPacket(packet, !request.insecure);
+      const txPacket = this._buildPacket(request.opcode, transactionId, request.cid, payload);
+      const encryptedPacket = this._encryptTxPacket(txPacket, !request.insecure);
 
       // TODO: Iterate over the fragments
       await this._device.write(c, encryptedPacket);
 
       // TODO: Iterate over response fragments
-      let responsePayload = await this._read(c, request.insecure, transactionId);
-      const response = TLV8Decoder.decode(responsePayload);
+      let rxPacket = await this._device.read(c);
+      let decryptedPacket = this._decryptRxPacket(rxPacket, !request.insecure);
+      const firstResponse = this._getResponsePayload(decryptedPacket, transactionId);
+
+      let fullResponse = firstResponse.data;
+      while (firstResponse.payloadLength > fullResponse.length) {
+        rxPacket = await this._device.read(c);
+        decryptedPacket = this._decryptRxPacket(rxPacket, !request.insecure);
+
+        const nextResponse = this._getResponseFragment(decryptedPacket, transactionId);
+        fullResponse = Buffer.concat([fullResponse, nextResponse]);
+      }
+
+      const response = TLV8Decoder.decode(fullResponse);
       cmd.handleResponse(response);
     }
 
     return cmd.getResult();
-  }
-
-  async _read(c, insecure, transactionId) {
-    const rxPacket = await this._device.read(c);
-    const decryptedPacket = this._decryptRxPacket(rxPacket, !insecure);
-    const payload = this._getResponsePayload(decryptedPacket, transactionId);
-    return payload;
   }
 
   _buildPacket(op, transactionId, cid, payload) {
@@ -113,8 +118,11 @@ class HapExecutor extends EventEmitter {
     let offset = 2;
 
     const ctl = packet.readUInt8(0);
-    const tid = packet.readUInt8(1);
+    if (ctl != 0x02) {
+      throw new Error(`Invalid control field in response 0x${ctl.toString(16)} - expected 0x2.`);
+    }
 
+    const tid = packet.readUInt8(1);
     if (tid != transactionId) {
       throw new Error('HAP-BLE response didn\'t match request transaction ID');
     }
@@ -131,10 +139,30 @@ class HapExecutor extends EventEmitter {
       const payloadLength = packet.readUInt16LE(offset);
       offset += 2;
 
-      return packet.slice(offset);
+      return {
+        data: packet.slice(offset),
+        payloadLength: payloadLength
+      }
     }
 
-    return Buffer.alloc(0);
+    return {
+      data: Buffer.alloc(0),
+      payloadLength: 0
+    };
+  }
+
+  _getResponseFragment(packet, transactionId) {
+    const ctl = packet.readUInt8(0);
+    if (ctl != 0x82) {
+      throw new Error('Bad fragmented packet.');
+    }
+
+    const tid = packet.readUInt8(1);
+    if (tid != transactionId) {
+      throw new Error('HAP-BLE response fragment didn\'t match request transaction ID');
+    }
+
+    return packet.slice(2);
   }
 
   async _establishSecureConnection() {
