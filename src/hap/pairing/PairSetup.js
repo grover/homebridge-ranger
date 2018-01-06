@@ -273,6 +273,13 @@ class PairSetup {
   handleM2Response(response) {
     this._salt = response[TLVType.Salt];
     this._accessoryPublicKey = response[TLVType.PublicKey];
+
+    if (!this._salt) {
+      throw new Error('Missing pairing salt.');
+    }
+    if (!this._accessoryPublicKey) {
+      throw new Error('Missing accessory public key.');
+    }
   }
 
 
