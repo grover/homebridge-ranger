@@ -106,7 +106,7 @@ sudo apt-get install bluetooth bluez libbluetooth-dev libudev-dev
 And finally install homebridge-ranger with:
 
 ```bash
-npm install -g homebridge-ranger --unsafe-perm
+sudo npm install -g homebridge-ranger --unsafe-perm
 ```
 
 ## Launch homebridge upon boot
@@ -154,13 +154,13 @@ sudo setcap cap_net_raw+eip /opt/node/bin/node
 You need to create the following folder:
 
 ```bash
-mkdir /var/lib/homebridge
+sudo mkdir /var/lib/homebridge
 ```
 
 and create the homebridge configuration file with ```nano```:
 
 ```bash
-nano /var/lib/homebridge/config.json
+sudo nano /var/lib/homebridge/config.json
 ```
 
 Paste the following configuration block, save with Ctrl+O and exit with Ctrl+X:
