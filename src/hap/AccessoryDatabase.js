@@ -289,13 +289,11 @@ async function discoverServiceMetadata(device, characteristics) {
     return {};
   }
 
-  serviceSignature
-    .map(async svc => {
-      const sig = serviceSignature[0];
-      const op = new ServiceSignatureReadRequest(svc.address, svc.cid);
-      const service = await device.run(op);
-      console.log(`Service signature ${JSON.stringify(service)}`);
-    });
+  for (let svc of serviceSignature) {
+    const op = new ServiceSignatureReadRequest(svc.address, svc.cid);
+    const signature = await device.run(op);
+    console.log(`Service signature: ${JSON.stringify(signature)}`);
+  }
 }
 
 module.exports = {
