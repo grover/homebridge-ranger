@@ -15,11 +15,13 @@ class ServiceSignatureReadRequest extends RequestBase {
     }
 
     super(request);
+
     this._address = address;
     this._cid = cid;
   }
 
   handleResponse(response) {
+    console.log(`Service signature response ${JSON.stringify(response)}`);
     const signature = HapCharacteristicSignatureDecoder.decode(response);
     this._signature = signature;
   }
