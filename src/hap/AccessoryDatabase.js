@@ -34,6 +34,13 @@ class AccessoryDatabase {
     return this.storeToFile(filePath);
   }
 
+  async delete() {
+    const filePath = buildStoragePath(this._api, this.address);
+    fs.unlink(filePath, err => {
+      console.error(`Failed to remove attribute database for ${this.address}.`);
+    });
+  }
+
   async storeToFile(filePath) {
     return new Promise((resolve, reject) => {
       const data = JSON.stringify(this, (key, value) => {

@@ -45,11 +45,9 @@ const RangerPlatform = class {
 
     this._hapBrowser = new HapBleBrowser(this.log, noble);
     this._hapBrowser.on('discovered', this._onHapAccessoryDiscovered.bind(this));
-
     this._createAccessories();
 
     noble.on('stateChange', this._onNobleStateChanged.bind(this));
-
     this.api.on('didFinishLaunching', this._didFinishLaunching.bind(this));
   }
 
@@ -62,17 +60,30 @@ const RangerPlatform = class {
   _createAccessories() {
     const { devices } = this.config;
 
-    this._accessories = devices.map(device => {
-      this.log(`Found device in config: "${device.name}"`);
+    const isRemoving = this._isRemovingAccessories();
 
-      if (this._devices[device.address]) {
-        throw new Error('Multiple accessories configured with the same MAC address.');
-      }
+    this._accessories = devices
+      .map(device => {
+        if (isRemoving && device.remove !== true) {
+          this.log(`Ignoring device ${device.name} as it's not to be removed.`);
+          return undefined;
+        }
 
-      const accessory = new BleAccessory(this.api, this.log, noble, device);
-      this._devices[device.address] = accessory;
-      return accessory;
-    });
+        this.log(`Found device in config: "${device.name}"`);
+        if (this._devices[device.address]) {
+          throw new Error('Multiple accessories configured with the same MAC address.');
+        }
+
+        const accessory = new BleAccessory(this.api, this.log, noble, device);
+        this._devices[device.address] = accessory;
+        return accessory;
+      })
+      .filter(device => device !== undefined);
+  }
+
+  _isRemovingAccessories() {
+    const isRemoving = this.config.devices.some(device => device.remove === true);
+    return isRemoving;
   }
 
   _didFinishLaunching() {
@@ -134,6 +145,11 @@ const RangerPlatform = class {
   }
 
   _publishAccessories() {
+    if (this._isRemovingAccessories()) {
+      // Do not announce accessories to force restart of homebridge after removal.
+      return;
+    }
+
     if (this._accessoriesCallback) {
       this._accessoriesCallback(this._accessories);
       this._accessoriesCallback = undefined;

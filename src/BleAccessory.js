@@ -9,6 +9,7 @@ const HapSubscriptionManager = require('./hap/HapSubscriptionManager');
 const DeviceWatcher = require('./hap/DeviceWatcher');
 
 const PairSetup = require('./hap/pairing/PairSetup');
+const RemovePairing = require('./hap/pairing/RemovePairing');
 
 let Characteristic, Service;
 
@@ -115,11 +116,16 @@ class BleAccessory {
     this.subscriptionManager = new HapSubscriptionManager(
       this.log, this._noble, this, this.accessoryDatabase, this._peripheral, this.hapExecutor);
 
-    await this._ensureDeviceIsPaired();
-    await this._refreshAccessoryInformation();
-    await this._createServiceAndCharacteristicsProxies();
-    await this._refreshAllCharacteristics();
-    this._started = true;
+    if (this.config.remove !== true) {
+      await this._ensureDeviceIsPaired();
+      await this._refreshAccessoryInformation();
+      await this._createServiceAndCharacteristicsProxies();
+      await this._refreshAllCharacteristics();
+      this._started = true;
+    }
+    else {
+      await this._removePairing();
+    }
   }
 
   hasPeripheral() {
@@ -127,7 +133,7 @@ class BleAccessory {
   }
 
   async _ensureDeviceIsPaired() {
-    if (!this._peripheral.isPaired) {
+    if (!this._peripheral.isPaired && this.config.remove !== true) {
       this.log(`Device is not paired yet, pairing now.`);
 
       let attempt = 1;
@@ -241,6 +247,43 @@ class BleAccessory {
       });
 
     this._services = this._services.concat(services);
+  }
+
+  async _removePairing() {
+    if (this._peripheral.isPaired && this.config.remove === true) {
+      this.log(`Removing pairing from ${this.name}`);
+
+      let attempt = 1;
+      let unpaired = !this._peripheral.isPaired;
+
+      for (let attempt = 1; unpaired === false && attempt < 4; attempt++) {
+        unpaired = await this._unpairDevice();
+        if (unpaired === false) {
+          this.log(`Failed remove pairing attempt #${attempt}, waiting 1s and trying again.`);
+          await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+      }
+
+      if (unpaired == false) {
+        this.log(`Failed to remove pairing with device ${this.name} after third attempt. Aborting.`);
+      }
+    }
+  }
+
+  async _unpairDevice() {
+    const removePairing = new RemovePairing(this.log, this.name, this.accessoryDatabase);
+    try {
+      const result = await this.hapExecutor.run(removePairing);
+      this.accessoryDatabase.pairing = undefined;
+      this.accessoryDatabase.delete();
+      this._peripheral.disconnect();
+    }
+    catch (e) {
+      this.log(`Remove pairing failed: ${JSON.stringify(e)}`, e);
+      return false;
+    }
+
+    return true;
   }
 
   getCharacteristic(address) {
