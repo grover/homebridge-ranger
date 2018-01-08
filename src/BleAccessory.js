@@ -1,6 +1,8 @@
 "use strict";
 
 const inherits = require('util').inherits;
+const debug = require('debug');
+
 const AccessoryDatabase = require('./hap/AccessoryDatabase');
 
 const HapExecutor = require('./hap/HapExecutor');
@@ -31,6 +33,13 @@ class BleAccessory {
 
     this.log = log;
     this.name = config.name;
+
+    this.log2 = {
+      events: debug(`ranger:${this.name}:events`),
+      reads: debug(`ranger:${this.name}:reads`),
+      writes: debug(`ranger:${this.name}:writes`),
+      error: debug(`ranger:${this.name}:errors`),
+    };
 
     this.config = config;
     if (this.config.reachability === undefined) {
@@ -112,9 +121,9 @@ class BleAccessory {
   async start() {
     this.accessoryDatabase = await AccessoryDatabase.create(this.api, this._peripheral);
     this.hapExecutor = new HapExecutor(this.log, this._peripheral, this.accessoryDatabase);
-    this.hapAccessor = new HapCharacteristicAccessor(this.log, this.hapExecutor);
+    this.hapAccessor = new HapCharacteristicAccessor(this.log2, this.hapExecutor);
     this.subscriptionManager = new HapSubscriptionManager(
-      this.log, this._noble, this, this.accessoryDatabase, this._peripheral, this.hapExecutor);
+      this._noble, this, this.accessoryDatabase, this._peripheral, this.hapExecutor);
 
     if (this.config.remove !== true) {
       await this._ensureDeviceIsPaired();
@@ -243,7 +252,7 @@ class BleAccessory {
         .includes(svc.UUID))
       .map(service => {
         this.log(`Publishing BLE service ${service.UUID} via proxy`);
-        return new Service.ProxyService(this.api, this.log, this.hapAccessor, this.subscriptionManager, service);
+        return new Service.ProxyService(this.api, this.log2, this.hapAccessor, this.subscriptionManager, service);
       });
 
     this._services = this._services.concat(services);

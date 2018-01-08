@@ -252,7 +252,7 @@ class PairVerify {
     if (this._error) {
       const error = new Error(`Failed to establish secure session.`);
       error.hapError = this._error;
-      return error;
+      throw error;
     }
 
     return this._result;

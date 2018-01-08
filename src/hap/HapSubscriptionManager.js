@@ -1,9 +1,11 @@
 "use strict";
 
+const debug = require('debug');
+
 class HapSubscriptionManager {
 
-  constructor(log, noble, accessory, accessoryDatabase, device, executor) {
-    this.log = log;
+  constructor(noble, accessory, accessoryDatabase, device, executor) {
+    this.log = debug(`ranger:${accessory.name}:events`);
     this.noble = noble;
     this.accessory = accessory;
     this.accessoryDatabase = accessoryDatabase;
@@ -50,7 +52,7 @@ class HapSubscriptionManager {
   }
 
   _handleNotification(address) {
-    this.log(`Handle notification of ${address.service}:${address.characteristic}`);
+    this.log('Handle notification of %s:%s', address.service, address.characteristic);
 
     // We know the specific characteristic that caused the change. Query it directly.
     const characteristic = this.accessory.getCharacteristic(address);
@@ -63,14 +65,14 @@ class HapSubscriptionManager {
   }
 
   subscribe(address) {
-    this.log(`Subscribe ${address.service}:${address.characteristic}`);
+    this.log('Subscribing to %s:%s', address.service, address.characteristic);
 
     this._activeSubscriptions.push(address);
     this._enableSubscription(address);
   }
 
   unsubscribe(address) {
-    this.log(`Unsubscribe ${address.service}:${address.characteristic}`);
+    this.log('Unsubscribing from %s:%s', address.service, address.characteristic);
     const subscription = this._activeSubscriptions.indexOf(address);
     if (subscription !== -1) {
       this._activeSubscriptions.splice(subscription, 1);
@@ -126,7 +128,7 @@ class HapSubscriptionManager {
           characteristic: characteristicUuid
         };
 
-        this.log(`Connected event on ${address.service}:${address.characteristic}`);
+        this.log('Connected event on %s:%s', address.service, address.characteristic);
         this._handleNotification(address);
       }
     }

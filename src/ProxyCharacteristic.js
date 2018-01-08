@@ -46,8 +46,6 @@ module.exports = {
       }
 
       _setCharacteristicValue(value, callback) {
-        this.log(`Writing ${value} to ${this._hapProps.address.service}:${this._hapProps.address.characteristic}`);
-
         this._accessor.writeCharacteristic(this._hapProps, value)
           .then(() => {
             callback(undefined);
@@ -58,8 +56,6 @@ module.exports = {
       }
 
       _getCharacteristicValue(callback) {
-        this.log(`Reading ${this._hapProps.address.service}:${this._hapProps.address.characteristic}`);
-
         this._accessor.readCharacteristic(this._hapProps)
           .then(value => {
             callback(undefined, value);
@@ -78,12 +74,13 @@ module.exports = {
       };
 
       refreshCachedValue() {
+        this.log.events('Refreshing %s:%s', this._hapProps.address.service, this._hapProps.address.characteristic);
         this._accessor.readCharacteristic(this._hapProps)
           .then(value => {
             this.updateValue(value);
           })
           .catch(reason => {
-            this.log(`Failed to refresh characteristic ${this._hapProps.address.service}:${this._hapProps.address.characteristic}`);
+            this.log.error('Failed to refresh characteristic %s:%s', this._hapProps.address.service, this._hapProps.address.characteristic);
           });
       }
     };
