@@ -72,6 +72,8 @@ The above commands should print ```v9.3.0``` and ```5.5.1``` respectively. Newer
 
 ## Install homebridge
 
+This plugin needs version **0.4.35** of homebridge. Earlier versions will not work. Later should work.
+
 ```bash
 sudo apt-get install libavahi-compat-libdnssd-dev
 sudo npm install -g homebridge --unsafe-perm

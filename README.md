@@ -6,7 +6,10 @@ Bridges existing HomeKit BLE accessories to IP via [Homebridge](https://github.c
 
 ## Beware
 
-**This plugin is in early development. While it has already been used in several situations, expect it to fail. Contributions are welcome to improve it.**
+**This plugin is fairly new. It has already been used in several situations, but there's likely still some rough edges. Contributions are welcome to improve it. Want to help? Take a look at the [CONTRIBUTING](docs/CONTRIBUTING.md) page.**
+
+Starting with version 0.3.0 of the plugin you'll need **homebridge@0.4.35** - earlier versions will not
+provide event notifications and rules based on accessories provided by this plugin will not work.
 
 ## Documentation
 

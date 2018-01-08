@@ -8,6 +8,8 @@ Install node.js 9.3.0 from [nodejs.org](https://nodejs.org/en/download/current/)
 
 ## Install homebridge
 
+This plugin needs version **0.4.35** of homebridge. Earlier versions will not work. Later should work.
+
 In Terminal:
 
 ```bash
