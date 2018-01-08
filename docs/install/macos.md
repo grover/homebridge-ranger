@@ -64,7 +64,7 @@ Create a plain text file in ~/.homebridge/config.json - create the folder if nec
 The above assumes you'll run homebridge as your current user account. You can start homebridge now, by executing the following in Terminal:
 
 ```bash
-DEBUG=homebridge homebridge
+DEBUG=homebridge,ranger:* homebridge
 ```
 
 You should now see the execution logs of homebridge, which includes a scan of your Bluetooth LE neighborhood. If starting succeeded you can continue by [verifying your homebridge installation](verify.md).

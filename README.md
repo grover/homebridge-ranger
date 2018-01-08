@@ -27,6 +27,7 @@ Please read the documentation in its entirety as this plugin is a bit more compl
   - [Removing a pairing](docs/pairing/remove-pairing.md)
   - [Supported accessories](docs/pairing/accessories.md)
 - [Contributing](docs/CONTRIBUTING.md)
+  - [Logging](docs/diagnostics/logging.md)
 - [Credits](docs/credits.md)
 
 ## Some asks for friendly gestures

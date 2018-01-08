@@ -131,7 +131,7 @@ HOMEBRIDGE_OPTS=-D -U /var/lib/homebridge
 
 # If you uncomment the following line, homebridge will log more
 # You can display this via systemd's journalctl: journalctl -f -u homebridge
-DEBUG=homebridge
+DEBUG=homebridge,ranger:*
 ```
 
 I would not recommend using the ```DEBUG=*``` option as this will give you a lot of logging from the bluetooth stack, which is usually not necessary. The debug option accepts a comma separated list of names if you need logging from other modules.
