@@ -21,6 +21,7 @@ Please read the documentation in its entirety as this plugin is a bit more compl
   - [Verify your installation of homebridge-ranger](docs/install/verify.md)
 - [Pairing accessories](docs/pairing/pairing.md)
   - [Attribute database](docs/pairing/attribute-database.md)
+  - [Removing a pairing](docs/pairing/remove-pairing.md)
   - [Supported accessories](docs/pairing/accessories.md)
 - [Contributing](docs/CONTRIBUTING.md)
 - [Credits](docs/credits.md)

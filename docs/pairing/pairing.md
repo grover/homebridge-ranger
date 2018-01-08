@@ -69,9 +69,9 @@ The above configuration will add a single BLE accessory to the plugin. You can p
 
 Make sure you've read and understood the [warnings](../warnings.md) before you continue.
 
-The plugin will pair with the accessory the first time you're running with the configuration. Please note there's no way to unpair at the moment. You'll have to use the means provided by the manufacturer of the accessory to reset it to factory settings if you want to unpair.
+The plugin will pair with the accessory the first time you're running with the configuration.
 
-Also please note that HomeKit accessories may have a physical limitation to the number of pairings that they can create in the product lifespan.
+Please note that HomeKit accessories may have a physical limitation to the number of pairings that they can create in the product lifespan.
 
 Simply configuring the plugin properly will initiate a pairing process, which can be observed by following the log:
 

@@ -10,12 +10,12 @@ Do not upgrade the firmware of your accessory via this plugin. Upgrading the fir
 
 If you really need to upgrade the firmware of the device:
 
+- [Remove the pairing with the plugin](pairing/remove-pairing.md)
 - Remove it from the plugin configuration
-- Reset it to factory settings
 - Pair it to iOS directly
 - Upgrade the device
 - Unpair it from iOS
-- [Pair](pairing/pairing.md) it again
+- [Pair it with the plugin](pairing/pairing.md) again
 
 You'll have to setup all your rules and scenes again.
 

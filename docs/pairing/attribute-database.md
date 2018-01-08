@@ -15,4 +15,4 @@ use them for malicious purposes. Make sure that your Raspberry configuration is 
 
 This file will be written everytime the configuration of an accessory changes. This doesn't mean changes done through HomeKit, but rather firmware updates performed against the device. Make sure you update your backups in those cases.
 
-Continue to [CONTRIBUTING](../CONTRIBUTING.md).
+Continue to [removing a pairing](../remove-pairing.md).
