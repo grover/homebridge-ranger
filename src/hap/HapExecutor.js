@@ -215,12 +215,20 @@ class HapExecutor extends EventEmitter {
       try {
         this._previousSessionKeys = await this._executeCommand(pairVerify);
         this._sessionCrypto.setSessionKeys(this._previousSessionKeys);
+        if (this._doNotResume) {
+          this._previousSessionKeys = undefined;
+        }
+
         this.log(`Secure connection to ${this._device.name} established.`);
         isSecure = true;
       }
       catch (e) {
         // Forget the previous session keys in case that Pair-Resume has failed.
-        this._previousSessionKeys = undefined;
+        if (this._previousSessionKeys) {
+          this.log('Device does not support pair resume. Forcing Pair-Verify.');
+          this._doNotResume = true;
+          this._previousSessionKeys = undefined;
+        }
         this._sessionCrypto.reset();
         await this._device.disconnect();
         this.log(`Failed to establish secure session to ${this._device.name}. Reason: ${e.message}`);
