@@ -19,6 +19,7 @@ class HapExecutor extends EventEmitter {
     this._accessoryDatabase = accessoryDatabase;
     this._device = device;
     this._queue = new SequentialTaskQueue();
+    this._previousSessionKeys = undefined;
     this._sessionCrypto = new HapBleSessionCrypto(log);
     this._transactionId = Math.floor(Math.random() * 255);
   }
@@ -210,14 +211,16 @@ class HapExecutor extends EventEmitter {
     let isSecure = this._sessionCrypto.isSecureSessionValid();
     if (!isSecure) {
       this.log(`Securing connection to ${this._device.name}`);
-      const pairVerify = new PairVerify(this.log, this._accessoryDatabase);
+      const pairVerify = new PairVerify(this.log, this._accessoryDatabase, this._previousSessionKeys);
       try {
-        const sessionKeys = await this._executeCommand(pairVerify);
-        this._sessionCrypto.setSessionKeys(sessionKeys);
+        this._previousSessionKeys = await this._executeCommand(pairVerify);
+        this._sessionCrypto.setSessionKeys(this._previousSessionKeys);
         this.log(`Secure connection to ${this._device.name} established.`);
         isSecure = true;
       }
       catch (e) {
+        // Forget the previous session keys in case that Pair-Resume has failed.
+        this._previousSessionKeys = undefined;
         this._sessionCrypto.reset();
         await this._device.disconnect();
         this.log(`Failed to establish secure session to ${this._device.name}. Reason: ${e.message}`);

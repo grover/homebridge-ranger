@@ -15,5 +15,6 @@ module.exports = {
   Permissions: 0x0B,
   FragmentData: 0x0C,
   FragmentLast: 0x0D,
+  SessionID: 0x0E,
   Separator: 0xFF
 };

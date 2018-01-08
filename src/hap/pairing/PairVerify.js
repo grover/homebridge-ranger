@@ -17,7 +17,7 @@ const TLV8Decoder = require('./../Tlv8Decoder');
 const TLV8Encoder = require('./../Tlv8Encoder');
 
 class PairVerify {
-  constructor(log, accessoryDatabase) {
+  constructor(log, accessoryDatabase, previousSessionKeys) {
     this.log = log;
 
     this._address = {
@@ -28,6 +28,10 @@ class PairVerify {
     this._cid = this._accessoryDatabase.getCharacteristic(this._address).cid;
     this._error = undefined;
     this._state = 0;
+    if (previousSessionKeys) {
+      this._sessionId = previousSessionKeys.sessionID;
+      this._sharedSecret = previousSessionKeys.sharedSecret;
+    }
 
     this._verifySecretKey = encryption.generateCurve25519SecretKey();
     this._verifyPublicKey = encryption.generateCurve25519PublicKeyFromSecretKey(this._verifySecretKey);
@@ -55,6 +59,20 @@ class PairVerify {
     tlv[TLVType.State] = Buffer.from([1]);
     tlv[TLVType.PublicKey] = this._verifyPublicKey;
 
+    if (this._sessionId) {
+      tlv[TLVType.Method] = Buffer.from([6]);
+      tlv[TLVType.SessionID] = this._sessionId;
+
+      const salt = Buffer.concat([this._verifyPublicKey, this._sessionId]);
+      const info = Buffer.from("Pair-Resume-Request-Info");
+      const requestKey = hkdf("sha512", salt, this._sharedSecret, info, 32);
+
+      var ciphertextBuffer = Buffer.alloc(0);
+      var macBuffer = Buffer.alloc(16);
+
+      encryption.encryptAndSeal(requestKey, Buffer.from("PR-Msg01"), Buffer.alloc(0), undefined, ciphertextBuffer, macBuffer);
+      tlv[TLVType.EncryptedData] = macBuffer;
+    }
 
     const payload = {};
     payload[TlvKeys.Value] = TLV8Encoder.encode(tlv);
@@ -107,32 +125,43 @@ class PairVerify {
   }
 
   handleResponse(response) {
-    const error = response[TLVType.Error];
+    this._state++;
+    this.log(`Received pair verify response for M${this._state}`);
+
+    const value = response[TlvKeys.Value];
+    const tlvValue = TLV8Decoder.decode(value);
+
+    const error = tlvValue[TLVType.Error];
     if (error) {
       this.log(error);
       this._error = error;
       return;
     }
 
-    this._state++;
-    this.log(`Received pair verify response for M${this._state}`);
-
-    const value = TLV8Decoder.decode(response[TlvKeys.Value]);
-    if (value[TLVType.State][0] != this._state) {
+    if (tlvValue[TLVType.State][0] != this._state) {
       this._error = 'Wrong state returned from the accessory.';
       return;
     }
 
     switch (this._state) {
       case 2:
-        return this.handleM2Response(value);
+        return this.handleM2Response(tlvValue);
 
       case 4:
-        return this.handleM4Response(value);
+        return this.handleM4Response(tlvValue);
     }
   }
 
   handleM2Response(response) {
+
+    const method = response[TLVType.Method];
+    if (method && method[0] === 6) {
+      // If resume succeeds, we're done. If resume fails, we'll try again
+      // without the previous session ID.
+      this.log('Device responded with pair resume response.');
+      this._handleResume(response);
+      return;
+    }
 
     const encryptedData = response[TLVType.EncryptedData];
     this._accessoryPublicKey = response[TLVType.PublicKey];
@@ -152,7 +181,9 @@ class PairVerify {
     encryptedData.copy(messageData, 0, 0, encryptedData.length - 16);
     encryptedData.copy(authTagData, 0, encryptedData.length - 16, encryptedData.length);
     var plaintextBuffer = Buffer.alloc(messageData.length);
-    encryption.verifyAndDecrypt(this._encryptionKey, Buffer.from("PV-Msg02"), messageData, authTagData, null, plaintextBuffer);
+    if (!encryption.verifyAndDecrypt(this._encryptionKey, Buffer.from("PV-Msg02"), messageData, authTagData, null, plaintextBuffer)) {
+      this._error = "Failed to verify M2 response.";
+    }
 
     // 4.8.3.4
     const subtlv = TLV8Decoder.decode(plaintextBuffer);
@@ -178,9 +209,42 @@ class PairVerify {
     const infoWrite = Buffer.from("Control-Write-Encryption-Key");
     // this.log(`Shared secret: ${JSON.stringify(this._sharedSecret)}`);
 
+    const resumeSalt = Buffer.from("Pair-Verify-ResumeSessionID-Salt");
+    const resumeInfo = Buffer.from("Pair-Verify-ResumeSessionID-Info");
+
     this._result = {
       decryptKey: hkdf("sha512", encSalt, this._sharedSecret, infoRead, 32),
-      encryptKey: hkdf("sha512", encSalt, this._sharedSecret, infoWrite, 32)
+      encryptKey: hkdf("sha512", encSalt, this._sharedSecret, infoWrite, 32),
+      sessionID: hkdf("sha512", resumeSalt, this._sharedSecret, resumeInfo, 32),
+      sharedSecret: this._sharedSecret
+    };
+  }
+
+  _handleResume(response) {
+
+    const encryptedData = response[TLVType.EncryptedData];
+    const newSessionID = response[TLVType.SessionID];
+
+    const resumeSalt = Buffer.concat([this._verifyPublicKey, newSessionID]);
+    const resumeInfo = Buffer.from("Pair-Resume-Response-Info");
+    const responseKey = hkdf("sha512", resumeSalt, this._sharedSecret, resumeInfo, 32);
+
+    var messageData = Buffer.alloc(0);
+    var plaintextBuffer = Buffer.alloc(messageData.length);
+    if (!encryption.verifyAndDecrypt(this._encryptionKey, Buffer.from("PR-Msg02"), messageData, encryptedData, null, plaintextBuffer)) {
+      this._error = "Failed to verify resume session response";
+      return;
+    }
+
+    const encSalt = Buffer.from("Control-Salt");
+    const infoRead = Buffer.from("Control-Read-Encryption-Key");
+    const infoWrite = Buffer.from("Control-Write-Encryption-Key");
+
+    this._result = {
+      decryptKey: hkdf("sha512", encSalt, this._sharedSecret, infoRead, 32),
+      encryptKey: hkdf("sha512", encSalt, this._sharedSecret, infoWrite, 32),
+      sessionID: newSessionID,
+      sharedSecret: this._sharedSecret
     };
   }
 
