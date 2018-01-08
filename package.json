@@ -34,7 +34,7 @@
   "homepage": "https://github.com/grover/homebridge-ranger#readme",
   "engines": {
     "node": ">=8.9.3",
-    "homebridge": ">=0.4.32"
+    "homebridge": ">=0.4.35"
   },
   "dependencies": {
     "buffer-shims": "^1.0.0",
