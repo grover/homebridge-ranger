@@ -166,16 +166,12 @@ class PairVerify {
     const encryptedData = response[TLVType.EncryptedData];
     this._accessoryPublicKey = response[TLVType.PublicKey];
 
-
-    // 4.8.3.1
     this._sharedSecret = encryption.generateCurve25519SharedSecKey(this._verifySecretKey, this._accessoryPublicKey);
 
-    // 4.8.3.2
     const encSalt = Buffer.from("Pair-Verify-Encrypt-Salt");
     const encInfo = Buffer.from("Pair-Verify-Encrypt-Info");
     this._encryptionKey = hkdf("sha512", encSalt, this._sharedSecret, encInfo, 32);
 
-    // 4.8.3.3
     var messageData = Buffer.alloc(encryptedData.length - 16);
     var authTagData = Buffer.alloc(16);
     encryptedData.copy(messageData, 0, 0, encryptedData.length - 16);
@@ -185,7 +181,6 @@ class PairVerify {
       this._error = "Failed to verify M2 response.";
     }
 
-    // 4.8.3.4
     const subtlv = TLV8Decoder.decode(plaintextBuffer);
     const accessoryPairingID = subtlv[TLVType.Identifier];
     const accessorySignature = subtlv[TLVType.Signature];

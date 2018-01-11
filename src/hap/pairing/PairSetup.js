@@ -127,33 +127,27 @@ class PairSetup {
 
   getM5Request() {
 
-    // 4.7.5.2.1
     const seed = crypto.randomBytes(32);
     const keyPair = ed25519.MakeKeypair(seed);
     this._rangerPairingID = Buffer.from(uuid());
     this._rangerLTSK = keyPair.privateKey;
     this._rangerLTPK = keyPair.publicKey;
 
-    // 4.7.5.2.2
     this._srpSharedSecret = this._srp.computeK();
     const controllerSalt = Buffer.from("Pair-Setup-Controller-Sign-Salt");
     const controllerInfo = Buffer.from("Pair-Setup-Controller-Sign-Info");
     const iOSDeviceX = hkdf("sha512", controllerSalt, this._srpSharedSecret, controllerInfo, 32);
 
-    // 4.7.5.2.3
     const iOSDeviceInfo = Buffer.concat([iOSDeviceX, this._rangerPairingID, this._rangerLTPK]);
 
-    // 4.7.5.2.4
     const iOSDeviceSignature = ed25519.Sign(iOSDeviceInfo, this._rangerLTSK);
 
-    // 4.7.5.2.5
     let subtlv = {};
     subtlv[TLVType.Identifier] = this._rangerPairingID;
     subtlv[TLVType.PublicKey] = this._rangerLTPK;
     subtlv[TLVType.Signature] = iOSDeviceSignature;
     subtlv = TLV8Encoder.encode(subtlv);
 
-    // 4.7.5.2.6
     var ciphertextBuffer = Buffer.alloc(subtlv.length);
     var macBuffer = Buffer.alloc(16);
     var encSalt = Buffer.from("Pair-Setup-Encrypt-Salt");
@@ -162,7 +156,6 @@ class PairSetup {
     this._encryptionKey = hkdf("sha512", encSalt, this._srpSharedSecret, encInfo, 32);
     encryption.encryptAndSeal(this._encryptionKey, Buffer.from("PS-Msg05"), subtlv, null, ciphertextBuffer, macBuffer);
 
-    // 4.7.5.2.7
     const tlv = {};
     tlv[TLVType.State] = Buffer.from([this._state]);
     tlv[TLVType.EncryptedData] = Buffer.concat([ciphertextBuffer, macBuffer]);
