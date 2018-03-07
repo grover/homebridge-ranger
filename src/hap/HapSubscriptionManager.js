@@ -34,8 +34,7 @@ class HapSubscriptionManager {
         const hasSubscriber = this._isSubscribed(c.address);
 
         oneSubscriber |= (hasSubscriber & supportsDisconnectedEvents);
-
-        if (supportsDisconnectedEvents && hasSubscriber) {
+        if (supportsDisconnectedEvents /*&& hasSubscriber*/) {
           // Potential candidate for a disconnected notification
           this._handleNotification(c.address);
         }
