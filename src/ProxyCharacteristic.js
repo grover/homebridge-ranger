@@ -39,7 +39,10 @@ module.exports = {
         this.UUID = hapProps.characteristic;
         this.address = hapProps.address.characteristic;
 
-        this.on('get', this._getCharacteristicValue.bind(this));
+        if (!hapProps.ev) {
+          this.on('get', this._getCharacteristicValue.bind(this));
+        }
+
         this.on('set', this._setCharacteristicValue.bind(this));
         this.on('subscribe', this._subscribeCharacteristic.bind(this));
         this.on('unsubscribe', this._unsubscribeCharacteristic.bind(this));
