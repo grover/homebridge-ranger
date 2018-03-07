@@ -3,6 +3,7 @@
 const inherits = require('util').inherits;
 const path = require('path');
 const fs = require('fs');
+const util = require('util');
 
 const CharacteristicSignatureReadRequest = require('./ops/CharacteristicSignatureReadRequest');
 const ServiceSignatureReadRequest = require('./ops/ServiceSignatureReadRequest');
@@ -298,8 +299,13 @@ async function discoverServiceMetadata(device, characteristics) {
 
   for (let svc of serviceSignature) {
     const op = new ServiceSignatureReadRequest(svc.address, svc.cid);
-    const signature = await device.run(op);
-    console.log(`Service signature: ${JSON.stringify(signature)}`);
+    try {
+      const signature = await device.run(op);
+      console.log(`Service signature: ${JSON.stringify(signature)}`);
+    }
+    catch (e) {
+      console.log(`Failed to read service signature: ${util.inspect(e)}`);
+    }
   }
 }
 
