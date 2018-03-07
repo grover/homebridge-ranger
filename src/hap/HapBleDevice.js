@@ -5,7 +5,7 @@ const EventEmitter = require('events').EventEmitter;
 const HapExecutor = require('./HapExecutor');
 
 class HapBleDevice extends EventEmitter {
-  constructor(log, peripheral, manufacturerData) {
+  constructor(log, peripheral, manufacturerData, browser) {
     super();
 
     this.log = log;
@@ -24,7 +24,7 @@ class HapBleDevice extends EventEmitter {
     this.services = undefined;
     this.characteristics = undefined;
 
-    this.executor = new HapExecutor(this.log, this);
+    this.executor = new HapExecutor(this.log, this, undefined, browser);
 
     this._pendingOperations = [];
     this._transactionId = Math.floor(Math.random() * 255);
@@ -212,7 +212,7 @@ class HapBleDevice extends EventEmitter {
 
     this._checkForDisconnectedEvents(data);
 
-    this.manufacturerData = data;    
+    this.manufacturerData = data;
     this.emit('manufacturerData', data);
   }
 

@@ -11,12 +11,13 @@ const HapBleSessionCrypto = require('./HapBleSessionCrypto');
 
 class HapExecutor extends EventEmitter {
 
-  constructor(log, device, accessoryDatabase) {
+  constructor(log, device, accessoryDatabase, browser) {
     super();
 
     this.log = log;
 
     this._accessoryDatabase = accessoryDatabase;
+    this._browser = browser;
     this._device = device;
     this._queue = new SequentialTaskQueue();
     this._previousSessionKeys = undefined;
@@ -31,10 +32,17 @@ class HapExecutor extends EventEmitter {
    * @param {*} cmd 
    */
   run(cmd) {
+    this._browser.suspend();
+
     return this._queue.push(async () => {
-      await this._establishSecureConnection();
-      const result = await this._executeCommand(cmd);
-      return result;
+      try {
+        await this._establishSecureConnection();
+        const result = await this._executeCommand(cmd);
+        return result;
+      }
+      finally {
+        this._browser.resume();
+      }
     });
   }
 

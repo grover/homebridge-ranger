@@ -1,7 +1,4 @@
 const EventEmitter = require('events').EventEmitter;
-const ManufacturerDataParser = require('./ManufacturerDataParser');
-const HapBleDevice = require('./HapBleDevice');
-const chalk = require('chalk');
 
 class HapBleBrowser extends EventEmitter {
 
@@ -10,89 +7,66 @@ class HapBleBrowser extends EventEmitter {
 
     this.log = log;
     this.noble = noble;
+
+    this._shouldScan = false;
     this._isScanning = false;
+    this._suspended = 0;
     this._devices = {};
 
+    this.noble.on('stateChange', this._onNobleStateChanged.bind(this));
     this.noble.on('discover', this._onBleDeviceDiscovered.bind(this));
     this.noble.on('scanStop', this._onScanStopped.bind(this));
   }
 
   start() {
-    if (this._isScanning === false) {
-      this.log('Starting to scan for BLE HomeKit accessories');
+    if (this._shouldScan === false) {
       this._scan();
-      this._isScanning = true;
+      this._shouldScan = true;
     }
   }
 
   _scan() {
-    // Need repetetive reports for the same device to detect the GSN for
-    // disconnected events in order to update HomeKit about changes in
-    // those characteristics.
-    this.noble.startScanning([], true);
+    if (this._nobleState === 'poweredOn' && this._shouldScan === true && this._suspended === 0 && this._isScanning === false) {
+      this.log('Starting to scan for bluetooth devices');
+      this.noble.startScanning([], true);
+      this._isScanning = true;
+    }
   }
 
   stop() {
+    if (this._shouldScan) {
+      this._shouldScan = false;
+      this._stop();
+    }
+  }
+
+  _stop() {
     if (this._isScanning) {
       this.log('Stopped to scan for BLE HomeKit accessories');
       this.noble.stopScanning();
+      this._isScanning = false;
       this._devices = {};
     }
   }
 
+  suspend() {
+    this._suspended++;
+    this.log(`Suspending BLE discovery: suspended=${this._suspended}`);
+    if (this._suspended === 1) {
+      this._stop();
+    }
+  }
+
+  resume() {
+    this._suspended--;
+    this.log(`Resumed BLE discovery: suspended=${this._suspended}`);
+    if (this._suspended === 0) {
+      setTimeout(() => this._scan(), 1000);
+    }
+  }
+
   _onBleDeviceDiscovered(peripheral) {
-    if (peripheral.advertisement.manufacturerData) {
-      const data = ManufacturerDataParser(peripheral.advertisement.manufacturerData);
-      if (data.isHAP) {
-        if (this._ensureMacAddressIsAvailable(peripheral)) {
-          if (this._updateDevice(peripheral, data) === false) {
-            this._addDevice(peripheral, data);
-          }
-        }
-      }
-    }
-  }
-
-  _ensureMacAddressIsAvailable(peripheral) {
-    // Mac specific hack :(
-    if (peripheral.address === 'unknown' && peripheral.advertisement.localName !== 'unknown') {
-      // CoreBluetooth doesn't have the address in its cache, connect to it once
-      // to ensure the address is available.
-      peripheral.connect((error) => {
-        if (!error) {
-          peripheral.disconnect();
-        }
-      });
-
-      return false;
-    }
-
-    return true;
-  }
-
-  _updateDevice(peripheral, data) {
-    let device = this._devices[peripheral.id];
-    if (device && device.ignore === false) {
-      // Update manufacturerData to enable disconnected notifications
-      device.updateManufacturerData(data);
-      device.updateRSSI(peripheral.rssi);
-    }
-
-    return device !== undefined;
-  }
-
-  _addDevice(peripheral, data) {
-    const device = new HapBleDevice(this.log, peripheral, data);
-    this._devices[peripheral.id] = device;
-
-    if (device.isPaired) {
-      this.log(`Found paired accessory ${device.name} address=${device.address} rssi=${device.rssi}dB`);
-    }
-    else {
-      this.log(chalk.yellowBright(`Found unpaired accessory ${device.name} address=${device.address} rssi=${device.rssi}dB`));
-    }
-
-    this.emit('discovered', device);
+    this.emit('discovered', peripheral);
   }
 
   _onScanStopped() {
@@ -104,14 +78,17 @@ class HapBleBrowser extends EventEmitter {
      * as the connection is established to influence something, we hold of for 2s.
      */
     const DelayScanRestart = 2000;
-    if (this._isScanning) {
+
+
+    if (this._shouldScan === true && this._isScanning === true && this._suspended === 0) {
       this.log(`Scanning stopped externally. Restarting in ${DelayScanRestart / 1000}s.`);
-      setTimeout(() => {
-        if (this._isScanning) {
-          this._scan();
-        }
-      }, DelayScanRestart);
+      setTimeout(() => this._scan(), DelayScanRestart);
     }
+  }
+
+  _onNobleStateChanged(nobleState) {
+    this._nobleState = nobleState;
+    this._scan();
   }
 };
 

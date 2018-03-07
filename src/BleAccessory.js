@@ -118,9 +118,9 @@ class BleAccessory {
     return 1;
   }
 
-  async start() {
+  async start(browser) {
     this.accessoryDatabase = await AccessoryDatabase.create(this.api, this._peripheral);
-    this.hapExecutor = new HapExecutor(this.log, this._peripheral, this.accessoryDatabase);
+    this.hapExecutor = new HapExecutor(this.log, this._peripheral, this.accessoryDatabase, browser);
     this.hapAccessor = new HapCharacteristicAccessor(this.log2, this.hapExecutor);
     this.subscriptionManager = new HapSubscriptionManager(
       this._noble, this, this.accessoryDatabase, this._peripheral, this.hapExecutor);
