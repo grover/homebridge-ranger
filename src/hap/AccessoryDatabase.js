@@ -168,7 +168,7 @@ async function generateServices(device) {
 
   const cids = await discoverCharacteristicIDs(allCharacteristics);
   const characteristics = await discoverCharacteristicMetadata(device, cids);
-  const metadata = await discoverServiceMetadata(device, cids);
+  // const metadata = await discoverServiceMetadata(device, cids);
 
   const services = {};
 
