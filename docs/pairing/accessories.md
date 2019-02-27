@@ -8,5 +8,6 @@ The following accessories are known to work with this plugin:
 | Elgato Systems | Eve Energy | ?     | 1.3.1 (466) | 0.3.0 |
 | Elgato Systems | Eve Thermo | ?     | 2.0.1 (521) | 0.3.0 |
 | Elgato Systems | Eve Door & Window | ?     | 2.1.0 (521) | 0.3.0 |
+| Elgato Systems | Eve Button | ? | 1.2.2 | 0.3.3 |
 
 You've got a working device that's not on the list? Have a device that works partially or needs some tweaks? Please consider [contributing](../CONTRIBUTING.md) your knowledge to the project.
