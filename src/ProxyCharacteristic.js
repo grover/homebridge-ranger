@@ -80,7 +80,16 @@ module.exports = {
         this.log.events('Refreshing %s:%s', this._hapProps.address.service, this._hapProps.address.characteristic);
         this._accessor.readCharacteristic(this._hapProps)
           .then(value => {
-            this.updateValue(value);
+            // Force a notification to HomeKit controllers
+            // Especially useful for stateless switches
+            var eventOnlyCharacteristic = this.eventOnlyCharacteristic;
+            try {
+              this.eventOnlyCharacteristic = true;
+              this.updateValue(value);
+            }
+            finally {
+              this.eventOnlyCharacteristic = eventOnlyCharacteristic;
+            }
           })
           .catch(reason => {
             this.log.error('Failed to refresh characteristic %s:%s', this._hapProps.address.service, this._hapProps.address.characteristic);
