@@ -7,7 +7,6 @@
     "doc": "docs"
   },
   "scripts": {
-    "install": "node install_dependencies.js",
     "test": "mocha 'tests/unit/**/*.mocha.js'",
     "release": "npm-github-release"
   },
