@@ -1,9 +1,8 @@
 
 const version = require('../package.json').version;
 
-const noble = require('noble');
+const BleExecutor = require('ble-executor');
 
-const HapBleBrowser = require('./hap/HapBleBrowser');
 const ManufacturerDataParser = require('./hap/ManufacturerDataParser');
 
 const BleAccessory = require('./BleAccessory');
@@ -48,8 +47,8 @@ const RangerPlatform = class {
     this._macToAccessory = {};
     this._devices = {};
 
-    this._hapBrowser = new HapBleBrowser(this.log, noble);
-    this._hapBrowser.on('discovered', this._onBluetoothDeviceDiscovered.bind(this));
+    this._bleBrowser = BleExecutor.browser;
+    this._bleBrowser.on('discovered', this._onBluetoothDeviceDiscovered.bind(this));
 
     this._createAccessories();
 
@@ -73,7 +72,7 @@ const RangerPlatform = class {
           throw new Error('Multiple accessories configured with the same MAC address.');
         }
 
-        const accessory = new BleAccessory(this.api, this.log, noble, device);
+        const accessory = new BleAccessory(this.api, this.log, BleExecutor.noble, device);
         this._macToAccessory[device.address] = accessory;
         return accessory;
       })
@@ -87,7 +86,7 @@ const RangerPlatform = class {
 
   _didFinishLaunching() {
     this.log('DidFinishLaunching');
-    this._hapBrowser.start();
+    this._bleBrowser.start();
   }
 
   accessories(callback) {
@@ -97,16 +96,10 @@ const RangerPlatform = class {
   }
 
   async _onBluetoothDeviceDiscovered(peripheral) {
-    var accessoryForDevice = this._macToAccessory[peripheral.address];
-    if (!accessoryForDevice) {
-      return;
-    }
-
-
     if (peripheral.advertisement.manufacturerData) {
       const data = ManufacturerDataParser(peripheral.advertisement.manufacturerData);
       if (data.isHAP) {
-        if (this._ensureMacAddressIsAvailable(peripheral)) {
+        if (this._ensureMacAddressIsAvailable(peripheral)) {      
           if (this._updateDevice(peripheral, data) === false) {
             this._addDevice(peripheral, data);
           }
@@ -117,7 +110,7 @@ const RangerPlatform = class {
 
   _ensureMacAddressIsAvailable(peripheral) {
     // Mac specific hack :(
-    if (peripheral.address === 'unknown' && peripheral.advertisement.localName !== 'unknown') {
+    if (peripheral.address === 'unknown' || peripheral.address === '') {
       // CoreBluetooth doesn't have the address in its cache, connect to it once
       // to ensure the address is available.
       peripheral.connect((error) => {
@@ -145,7 +138,7 @@ const RangerPlatform = class {
 
 
   _addDevice(peripheral, data) {
-    const device = new HapBleDevice(this.log, peripheral, data, this._hapBrowser);
+    const device = new HapBleDevice(this.log, peripheral, data, this._bleBrowser);
     this._devices[peripheral.address] = device;
 
     if (device.isPaired) {
@@ -160,6 +153,9 @@ const RangerPlatform = class {
 
   async _onHapAccessoryDiscovered(device) {
     const accessoryForDevice = this._macToAccessory[device.address];
+    if (accessoryForDevice === undefined) {
+      return;
+    }
 
     if (accessoryForDevice.hasPeripheral() === false) {
       accessoryForDevice.assignPeripheral(device);
@@ -189,7 +185,7 @@ const RangerPlatform = class {
   }
 
   async _stopScanning() {
-    this._hapBrowser.stop();
+    this._bleBrowser.stop();
     await new Promise((resolve) => {
       setTimeout(resolve, 200);
     });
@@ -197,7 +193,7 @@ const RangerPlatform = class {
 
   async _startAccessories() {
     for (let accessory of this._accessories) {
-      await accessory.start(this._hapBrowser);
+      await accessory.start(this._bleBrowser);
     }
   }
 

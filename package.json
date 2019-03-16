@@ -8,7 +8,8 @@
   },
   "scripts": {
     "test": "mocha 'tests/unit/**/*.mocha.js'",
-    "release": "npm-github-release"
+    "release": "npm-github-release",
+    "scan": "DEBUG=* homebridge -D -U `cd ./tests/scan && pwd` -P `pwd`"
   },
   "repository": {
     "type": "git",
@@ -36,6 +37,7 @@
     "homebridge": ">=0.4.35"
   },
   "dependencies": {
+    "ble-executor": "grover/ble-executor",
     "buffer-shims": "^1.0.0",
     "chalk": "^2.4.2",
     "clone": "^2.1.2",
@@ -45,7 +47,6 @@
     "fast-srp-hap": "^1.0.1",
     "hap-nodejs": "^0.4.48",
     "moment": "^2.24.0",
-    "noble": "^1.9.1",
     "sequential-task-queue": "^1.2.1",
     "uuid": "^3.3.2"
   },
