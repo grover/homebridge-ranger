@@ -67,3 +67,5 @@ tests/hap
 tests/pairing
 tests/persist
 tests/ranger
+
+tests/scan/persist
