@@ -110,6 +110,10 @@ And finally install homebridge-ranger with:
 ```bash
 sudo npm install -g homebridge-ranger --unsafe-perm
 ```
+If you experience errors related to /pull/head..; upgrade npm:
+```bash
+npm install npm -g
+```
 
 ## Launch homebridge upon boot
 
