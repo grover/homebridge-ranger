@@ -4,7 +4,7 @@ This plugin is fairly new and there's likely still some stuff that needs to be d
 
 ## How to help?
 
-First of all there's a limited list of accessories that are known to work. It would be great if you have a device (or a device with a different hardware/firmware version) that's not on the list and you could test it out. If you find one that works or doesn't: File an [Issue](www.github.com/grover/homebridge-ranger/issues/new) and tell me about it.
+First of all there's a limited list of accessories that are known to work. It would be great if you have a device (or a device with a different hardware/firmware version) that's not on the list and you could test it out. If you find one that works or doesn't: File an [Issue](../../../issues/new) and tell me about it.
 
 ## Experimental stuff
 
