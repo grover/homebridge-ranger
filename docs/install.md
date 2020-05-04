@@ -15,4 +15,4 @@ Installing this plugin is a bit more difficult than your usual plugin. It's been
 
 - [Pairing an accessory](pairing/pairing.md)
 
-Continue to [Supported Devices](accessories/index.md)
+Continue to [Supported Devices](pairing/accessories.md)
